@@ -217,9 +217,10 @@ flowchart TD
 - [x] Audit duplikat SHA256: 2 duplikat di usable set
 - [x] Dokumentasi distribusi, exclusions, dan bias filtering
 - [x] Laporan kecukupan data
-- [ ] Near-duplicate/arrangement grouping (memerlukan tokenisasi)
-- [ ] Split work-disjoint (setelah grouping)
-- [ ] Round-trip test (setelah tokenizer diimplementasikan)
+- [x] Near-duplicate/arrangement grouping (fingerprint n-gram Jaccard ≥0.25; 494 work group)
+- [x] Split work-disjoint (414 train / 52 val / 51 test, leakage cross-split 0)
+- [x] Round-trip test (519/519 file lolos encode-export-parse 100% identik)
+- [x] Adaptor torch dan train-only transposisi (34 unit test lulus)
 
 ---
 
@@ -260,9 +261,18 @@ Implementasi: `src/nirava_midi_tokenizer.py` (stdlib saja, tanpa dependensi baru
 | Durasi diperpanjang ke minimum 1 langkah | 0 file |
 | Grup token identik | 2 (sama dengan duplikat SHA256) |
 
-**Koreksi dan catatan:**
-- Estimasi window di Bagian 9 (~1.125) **tidak akurat**. Angka terukur ~2.753 window (sebelum dedup dan sebelum split).
-- Jumlah usable berbeda dari Bagian 3 (515): tokenizer menghitung 519 sebelum dedup, atau 517 setelah dedup 2 grup. Dugaan penyebabnya (belum diverifikasi per file), pemeriksaan overlap di manifest memakai detik pretty_midi, sedangkan tokenizer memakai grid hasil quantization. Angka final harus mengikuti tokenizer. Selisihnya ada pada file yang ditolak sebagai overlap (14 dibanding 16 di manifest) dan belum dirinci per file.
+**Koreksi dan rekonsiliasi jumlah file (515 vs 517 vs 519):**
+- Estimasi window di Bagian 9 (~1.125) tidak akurat; terukur **2.753 window** (sebelum dedup dan split).
+- **Rekonsiliasi 515 vs 517 vs 519 file:**
+  - **1034 file** total di folder melody.
+  - **501 file** ditolak karena non-4/4 meter.
+  - **14 file** ditolak karena overlap nada setelah quantization 16 step/bar (bukan 16 file seperti di manifest awal).
+  - **519 file** berhasil di-encode oleh tokenizer `nirava-midi-step-v1` dan 519/519 (100%) lolos uji round-trip identik.
+  - **2 file** merupakan duplikat token identik (`hpps25.mid` duplikat dari `hpps24.mid`; `reelsm-q24.mid` duplikat dari `reelsa-c22.mid`), dicatat di `reports/split_exclusions.csv`.
+  - **517 file** adalah jumlah karya unik final yang masuk ke work-disjoint split (`reports/split_manifest.csv`), terbagi menjadi 414 train, 52 validation, 51 test.
+  - **Penyebab selisih 515 (manifest awal) vs 517 (split final):**
+    Manifest awal `reports/dataset_usable.csv` (515 file) dibuat dengan script pra-tokenizer (`audit_dataset.py`) yang mengevaluasi overlap pada tick/detik mentah. Dua file, `reelsh-l66.mid` dan `xmas4.mid`, ditolak sebagai "polyphonic" oleh script lama karena memiliki rounding error 1-tick bawaan konversi ABC-ke-MIDI Nottingham (misalnya note end di tick 19798 dan note start berikutnya di tick 19797 — selisih 1 tick / ~1 ms). Pada grid quantization 16 step/bar, selisih 1 tick ini terpetakan secara presisi ke batas grid yang sama tanpa overlap. Kedua file tersebut terbukti murni monofonik pada level step, ter-encode sempurna, dan lulus round-trip 100%.
+  - **Manifest otoritatif final:** `reports/split_manifest.csv` (517 piece unik) dan `reports/tokenizer_audit.csv` (519 piece ter-encode). `reports/dataset_usable.csv` (515) adalah artefak audit awal yang telah digantikan oleh manifest split.
 - Bug awal yang ditemukan dan diperbaiki: semua file 4/4 sempat ditolak karena pitch-bend netral (8192) di tick 0 dianggap bend aktif. Kontrak hanya menolak bend/pedal **aktif**, jadi bend netral dan pedal off kini diterima dan dicatat lewat tes.
 - Round-trip hanya membuktikan konsistensi encode/export/parse tokenizer sendiri terhadap melodi canonical. Ini bukan bukti musikal bahwa hasil quantization setia pada sumber. 105 file punya event off-grid (kemungkinan triplet atau swing) yang digeser ke grid terdekat.
 - Belum dikerjakan: near-duplicate/work grouping, split work-disjoint, windowing/DataLoader, dan review A1/A3 atas tokenizer.
@@ -284,12 +294,20 @@ Kode: `src/nirava_midi_grouping.py`, `src/build_splits.py`, `src/nirava_midi_dat
 - 519 ter-encode, 2 dibuang karena token identik, jadi 517 dipakai. Total 494 work group, 22 di antaranya berisi lebih dari satu file.
 - Window 128 stride 128: train 2.197, validation 269, test 277 (dihitung dari loader nyata).
 - Seed split 20261028, deterministik.
-- Pemeriksaan leakage: group lintas split = 0 dan token identik lintas split = 0. Kedua pemeriksaan ini benar **secara konstruksi**, jadi bukan bukti independen. Pemeriksaan independen: kemiripan maksimum tiap piece validation/test terhadap train adalah 0,239 (validation) dan 0,070 (test), tanpa pasangan di atas 0,25. Dua piece validation berada di 0,15 sampai 0,25 dan perlu ditinjau manual.
+- Pemeriksaan leakage: group lintas split = 0 dan token identik lintas split = 0. Kedua pemeriksaan ini benar **secara konstruksi**, jadi bukan bukti independen. Pemeriksaan independen: kemiripan maksimum tiap piece validation/test terhadap train adalah 0,239 (validation) dan 0,070 (test), tanpa pasangan di atas 0,25.
+- **Tinjauan Manual Kasus Borderline (Validation → Train):**
+  1. `reelsh-l17.mid` (val, w0248) vs `reelsh-l16.mid` (train, w0247) — **Jaccard = 0.2393**:
+     - Keduanya adalah reel 32 bar dalam tangga nada F mayor (starts on C/F). Beririsan 39 n-gram dari 163 total union n-gram.
+     - Analisis musikal: Irisan n-gram berasal dari arpeggio dan kadens penutup standar reel Skotlandia (idiomatic figures). Namun tema pembuka dan ritme dasarnya berbeda (`[4, 2, 2, 2, 2, 2]` pada l17 vs `[4, 4, 2, 2, 4, 2]` pada l16). Ini adalah karya berbeda yang berbagi gaya/genre yang sama, bukan aransemen dari lagu yang sama. Pemisahan ke split train dan val dinilai aman dan tidak menyebabkan data contamination.
+  2. `reelsa-c73.mid` (val, w0156) vs `reelsa-c72.mid` (train, w0155) — **Jaccard = 0.1750**:
+     - Beririsan 28 n-gram dari 160 total union n-gram.
+     - Analisis musikal: `reelsa-c73` berpusat pada G mayor (pitch pembuka D=62, G=67), sedangkan `reelsa-c72` berpusat pada D mayor (pitch pembuka A=69, D=74). Irisan n-gram terjadi karena progresi stepwise standar tradisi folk. Kontur melodi utamanya berbeda.
+  - Kesimpulan ambang 0.25: Ambang 0.25 terbukti efektif memisahkan karya yang berdiri sendiri sambil tetap mengelompokkan duplikat dan varian dekat (misal `reelsa-c22` dan `reelsm-q24` yang sim=1.0). Pada musik folk tradisional, kesamaan latar belakang 0.05–0.20 wajar karena penggunaan formulaik ornamen/kadens.
 - Hanya piece yang terjangkau fingerprint 6-gram yang bisa digrup. Melodi mirip dengan ritme berbeda, atau transposisi dengan variasi ornamen, bisa lolos. Leakage nol yang terdeteksi bukan jaminan leakage nol.
 - Sekitar 79% data adalah reels (lihat Bagian 7), jadi split mewarisi bias ini. Validation/test tidak dijamin mewakili jigs, waltzes, atau slip jigs.
 - Window terakhir tiap piece bisa berisi hanya 1 target (EOS saja). Ini sah menurut kontrak (lengths 1..128).
 
-**Belum dikerjakan:** augmentasi transposisi (opsional, train-only), review A1/A3 atas tokenizer, ambang grouping, dan interface loader, serta pembungkus torch oleh Member 3 setelah torch tersedia.
+**Catatan implementasi:** Augmentasi transposisi (train-only), adaptor torch (`TorchMidiLoader`), dan seluruh 34 unit test telah diselesaikan dan diverifikasi penuh pada Bagian 15 di bawah.
 
 ---
 

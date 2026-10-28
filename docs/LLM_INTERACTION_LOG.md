@@ -297,14 +297,89 @@ for batch in loader:
     pass
 ```
 - Tokenizer hash: `21c0930ebf49f212455600a011be2b14cd066793619b2d47c5d972495a6a9bba`
-- V = 133, PAD = 0, BOS = 1, EOS = 2, NOTE_0..NOTE_127 = 3..130, HOLD = 131, REST = 132
+- V = 133, PAD = 0, BOS = 1, EOS = 2, REST = 3, HOLD = 4, NOTE_0..NOTE_127 = 5..132 (NOTE_BASE = 5)
 - Environment: Python 3.12.10, torch 2.15.0+cpu, venv di `D:\nirava-venv`
 - torch CUDA belum di-install; jika training memerlukan GPU (RTX 5060 8GB, driver 616.92), Member 3 perlu `pip install torch --index-url https://download.pytorch.org/whl/cu126`
 
 ### Isu tersisa
 
 1. Hak komposisi/arrangement Nottingham — perlu diverifikasi bersama tim/dosen
-2. 2 file validasi dengan similarity 0.15–0.25 ke train — perlu review manual
+2. 2 file validasi dengan similarity 0.15–0.25 ke train — telah ditinjau manual di TASK 02B (keduanya aman, idiomatic figures folk reel)
 3. Dataset bias 79.4% reels — didokumentasikan tetapi belum dimitigasi
-4. Git commit dan PR belum dibuat
+4. Git commit dan PR — commit lokal `216aed4` selesai; push remote menunggu credential
 5. Stage 1 GO masih pending — tidak ada training/implementasi model
+
+---
+
+## Sesi TASK 02B — Final Data Pipeline Audit and Handoff Fixes
+
+- **ID sesi:** `944b335b-5dc1-49b7-9075-2d022e955ec5` (Lanjutan)
+- **Tanggal:** 29 Oktober 2026
+- **Anggota:** Member 2 (Data Pipeline & Preprocessing Engineer)
+- **Target modul:** Rekonsiliasi dataset count (515 vs 517 vs 519), verifikasi borderline leakage, verifikasi data augmentation train-only, panduan reproduksi mandiri, dan penyusunan handoff batch untuk Member 3.
+
+### 1. Rekonsiliasi Jumlah File Dataset (515 vs 517 vs 519)
+- **Problem Statement:** Terdapat disparitas angka usable MIDI antara laporan audit awal (515 file di `reports/dataset_usable.csv`) dengan manifest split (`reports/split_manifest.csv` berisi 517 file) dan audit tokenizer (`reports/tokenizer_audit.csv` berisi 519 file ter-encode).
+- **Analisis & Root Cause:**
+  1. Total file MIDI di folder `data/.../MIDI/melody`: 1034 file.
+  2. Filter meter 4/4 menolak 501 file (didominasi jigs 6/8 dan waltzes 3/4). Sisa: 533 file 4/4.
+  3. Tokenizer `nirava-midi-step-v1` menolak 14 file karena overlap nada setelah grid quantization 16 step/bar. Berhasil di-encode: **519 file**. Seluruh 519 file lolos uji round-trip encode-export-parse 100% identik.
+  4. Deduplikasi exact token sequence mengeliminasi 2 file: `hpps25.mid` (duplikat dari `hpps24.mid`) dan `reelsm-q24.mid` (duplikat dari `reelsa-c22.mid`), dicatat di `reports/split_exclusions.csv`. Sisa karya unik: **517 file**.
+  5. Selisih 515 pada `dataset_usable.csv` disebabkan oleh script audit lama (`audit_dataset.py`) yang mengecek overlap pada tick/detik mentah sebelum quantization. File `reelsh-l66.mid` dan `xmas4.mid` ditolak oleh script lama karena adanya rounding slop 1-tick (~1 ms) dari konverter ABC-ke-MIDI Nottingham. Pada grid quantization 16 step/bar, selisih 1 tick ini terpetakan secara presisi ke batas grid yang sama tanpa tumpang tindih. Kedua file terbukti monofonik murni pada tingkat step.
+  6. **Kesimpulan Otoritatif:** `reports/split_manifest.csv` (517 karya unik) adalah manifest final resmi. `reports/tokenizer_audit.csv` (519 ter-encode) adalah audit tokenizer resmi. `reports/dataset_usable.csv` (515) adalah artefak pra-tokenizer historis.
+
+### 2. Verifikasi Potensi Leakage & Kasus Borderline
+- **Uji Independen:** Seluruh pasangan karya lintas split dihitung skor kemiripannya menggunakan Jaccard similarity atas 6-gram interval transposisi-invarian.
+- **Hasil Ambang:** 0 grup melintasi split pada ambang 0.25 (split strictly work-disjoint).
+- **Kasus Borderline yang Ditinjau Manual:**
+  1. `reelsh-l17.mid` (validation) vs `reelsh-l16.mid` (train) — **Jaccard = 0.2393**:
+     - Keduanya adalah reel 32 bar dalam tangga nada F mayor. Berbagi 39 n-gram dari 163 n-gram unik.
+     - Analisis musikal: Irisan n-gram berasal dari arpeggio dan kadens penutup tipikal reel Skotlandia (idiomatic figures). Ritme pembuka berbeda nyata (`[4,2,2,2,2,2]` vs `[4,4,2,2,4,2]`). Merupakan dua lagu terpisah dalam genre yang sama, bukan varian/aransemen satu sama lain.
+  2. `reelsa-c73.mid` (validation) vs `reelsa-c72.mid` (train) — **Jaccard = 0.1750**:
+     - Nada dasar berbeda (`reelsa-c73` di G mayor, `reelsa-c72` di D mayor). Irisan n-gram disebabkan run tangga nada stepwise standar folk.
+- **Kesimpulan:** Ambang 0.25 berhasil membedakan varian sejati (misal sim=1.0) dari kemiripan idiom genre folk. Pemisahan split aman dari kontaminasi data.
+
+### 3. Verifikasi Data Augmentation Train-Only
+- Diuji secara programatik pada `processed/tokens_v1_aug.jsonl`:
+  - **Train:** 414 original + 4.554 transposed (offset -5..+6 semitone) = 4.968 pieces (menghasilkan **26.364 windows**).
+  - **Validation:** 52 pieces (269 windows, 100% identik dengan versi unaugmented, offset=0).
+  - **Test:** 51 pieces (277 windows, 100% identik dengan versi unaugmented, offset=0).
+  - Setiap record augmentasi mencatat `parent_piece_id` dan `transpose_offset`.
+
+### 4. Eksekusi Uji Coba Unit Test
+- **Perintah:**
+  ```powershell
+  $env:PYTHONPATH="src"
+  & D:\nirava-venv\Scripts\python.exe -m unittest discover -s tests -v
+  ```
+- **Hasil:** **34 passed, 0 failures, 0 errors** (1.507 detik).
+  - `tests/test_nirava_midi_tokenizer.py`: 17 tests passed.
+  - `tests/test_nirava_midi_data.py`: 11 tests passed.
+  - `tests/test_nirava_midi_torch.py`: 6 tests passed.
+
+### 5. Bukti Format Batch Handoff (Member 3 Interface)
+Diekstrak dari `TorchMidiLoader('processed/tokens_v1_aug.jsonl', split='train', batch_size=4)`:
+```text
+input_ids   : shape=[4, 128], dtype=torch.int64, min=1, max=89
+target_ids  : shape=[4, 128], dtype=torch.int64, min=4, max=89
+loss_mask   : shape=[4, 128], dtype=torch.bool,  min=True, max=True
+lengths     : shape=[4],      dtype=torch.int64, min=128, max=128
+piece_id    : list of str [4]
+work_group_id: list of str [4]
+split       : list of str [4]
+window_start: list of int [4]
+parent_hash : list of str [4]
+
+Target Shift Verification:
+input_ids[0, :8]  : [1,  79, 4,  4,  4,  84, 4,  4]
+target_ids[0, :8] : [79, 4,  4,  4,  84, 4,  4,  4]
+loss_mask[0, :8]  : [True, True, True, True, True, True, True, True]
+```
+Karakteristik:
+- Target `target_ids` merupakan pergeseran tepat 1 langkah ke depan dari `input_ids` (autoregressive next-token prediction).
+- Token 1 adalah BOS; target pertamanya adalah nada pertama (token 79 = NOTE 74 / D5). Token 4 adalah HOLD.
+- `loss_mask` bertipe boolean dan mengecualikan posisi PAD pada akhir window.
+
+### 6. Artefak Panduan Reproduksi Mandiri
+- Telah dibuat panduan lengkap tanpa machine-specific paths di [`docs/DATA_PIPELINE_GUIDE.md`](DATA_PIPELINE_GUIDE.md).
+- Status lisensi repositori Nottingham (GPLv3) dan komposisi folk tradisional telah diklarifikasi dan dipisahkan dari hak approval dosen.
