@@ -19,10 +19,18 @@ Landing langsung ke workspace → pilih sampel atau upload → validasi → prog
 - Aplikasi nyaman pada mobile dan desktop, keyboard accessible.
 
 ## Out of scope
-Login, multi-tenant enterprise, batch upload, transkripsi, model training, live mic streaming, billing, social sharing.
+Login, multi-tenant enterprise, batch upload, transkripsi, training melalui antarmuka pengguna, live mic streaming, billing, social sharing.
+
+## Deliverable akademik wajib
+
+Member 1 mengusulkan kontrak `nirava-stft-cgan-v1`: cGAN PyTorch pada komponen real–imaginer STFT, input training awal mono 16 kHz sepanjang 32000 sampel (2 detik), pasangan noisy–clean sejajar dan split speaker-aware. Rekonstruksi memakai iSTFT tanpa pretrained vocoder. Segmen training bukan batas upload produk; input panjang ditangani chunking offline di backend sesuai konfigurasi model. Kelayakan speaker/clean target dataset aktif belum terverifikasi.
+
+Panduan dosen menjadi prioritas atas kebutuhan hackathon lama. Bukti yang dinilai terutama orisinalitas Vibe Coding, log interaksi, model/pelatihan dan kerja sama; polish aplikasi tidak menggantikan training.
+
+Desain dan training model generatif dari inisialisasi acak, data pipeline berpasangan, loss/loop, eksperimen hyperparameter, grafik metrik valid, serta log LLM dan debugging masuk lingkup proyek. Training dilakukan offline setelah gate disetujui, tidak melalui endpoint produk. Lihat [proposal model](MODEL_PROPOSAL.md) dan [dataset pilihan pengguna](DATASET_REQUIREMENTS.md). DeepFilterNet pretrained saja tidak memenuhi kebutuhan ini. Semua hasil masih belum diukur.
 
 ## Success measures (belum ada hasil)
 Job completion rate, median processing time, hasil uji intelligibility, MOS listening panel atau proxy evaluasi dengan keterbatasan dinyatakan.
 
 ## Open decisions
-Rubrik Generative AI, model final, lisensi, batas durasi, lokasi deploy, kebijakan retensi, dataset evaluasi.
+Penerimaan dosen untuk speech enhancement di luar contoh, model final, lisensi/isi mirror Kaggle, GPU/tenggat, batas durasi, lokasi deploy, kebijakan retensi, dan protokol evaluasi final. Rubrik resmi sudah dibaca; persetujuan belum ada.

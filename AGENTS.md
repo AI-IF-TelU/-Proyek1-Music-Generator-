@@ -11,6 +11,9 @@ Nama proyek masih perlu pemeriksaan merek dan tidak mengubah status Stage 1.
 4. `docs/DESIGN_SYSTEM.md`, `docs/DEVELOPMENT.md`, `docs/EVALUATION.md` sesuai tugas.
 
 ## Aturan wajib
+- Kebutuhan akademik panduan resmi dosen mengungguli blueprint hackathon lama. Baca panduan bila tersedia; jangan menganggap referensi literatur sebagai persetujuan dosen.
+- Model utama wajib dirancang tim dan dilatih dari inisialisasi acak melalui Vibe Coding; jangan gunakan pretrained weights, teacher atau vocoder sebagai pemenuhan model utama. Simpan prompt asli, alasan keputusan, log error/solusi nyata dan ekspor/link chat.
+- Kontrak ML aktif `nirava-stft-cgan-v1` di `docs/MODEL_PROPOSAL.md`: PyTorch dasar, kompleks STFT, waveform mono16kHz, segmen awal32000 sampel (2detik), paired alignment dan split speaker-aware. Ini spesifikasi usulan, belum implementasi/approval. Perubahan shape/preprocessing/loss perlu review A1/A2/A3 serta versioning kontrak.
 - Jangan mulai Stage 2 sampai Stage 1 mendapat verdict GO dan demo concept disetujui pengguna.
 - Jangan mengklaim DeepFilterNet sebagai Generative AI tanpa justifikasi ilmiah dan kecocokan rubrik.
 - Next.js hanya memanggil FastAPI; inference ML hanya di backend.
@@ -27,3 +30,5 @@ Nama proyek masih perlu pemeriksaan merek dan tidak mengubah status Stage 1.
 
 ## Scope MVP
 Upload, enhancement, A/B comparison + download. Tanpa akun, billing, admin dashboard, Redis, Celery, atau Three.js kecuali terbukti perlu.
+
+Training offline, data audit, eksperimen hyperparameter dan metrik aktual adalah deliverable akademik wajib; bukan fitur training dalam UI. Persyaratan estetika/kompetisi tambahan tidak menggantikan bukti model/training dan log dosen.
