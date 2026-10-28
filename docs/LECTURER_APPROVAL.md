@@ -7,7 +7,7 @@ Penugasan Generative Audio & Sequence/MIDI String Generator diberikan pengguna. 
 - [ ] LSTM manual dengan PyTorch Linear/tensor/autograd memenuhi from scratch dan tingkat kompleksitas.
 - [ ] Penggunaan keluarga LSTM lama diterima atau syarat kategori10tahun perlu penyesuaian; belum ada keputusan.
 - [ ] Monofonik, fixed4/4/120BPM/velocity80, NOTE/HOLD/REST dan quantization lossy memenuhi tugas.
-- [ ] Dataset MIDI beserta hak komposisi/arrangement, filtering dan work-disjoint split diterima; dataset belum dipilih.
+- [ ] Dataset MIDI beserta hak komposisi/arrangement, filtering dan work-disjoint split diterima; Nottingham MIDI/melody telah dipilih, tetapi audit hak data, work grouping dan subset sesuai tokenizer belum selesai.
 - [ ] CE/NLL/perplexity, ablation/sweep, sampling/raw validity versus grammar, listening dan memorization audit memadai.
 - [ ] Bentuk ekspor/link LLM, error analysis, kontribusi4anggota dan bukti training memadai.
 - [ ] Hardware/time budget/tenggat dan urutan pilot/GO diputuskan tanpa izin coding tersirat.

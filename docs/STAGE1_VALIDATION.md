@@ -5,7 +5,7 @@
 ## Blocker aktif dan bukti
 
 - [ ] A1: konfirmasi dosen atas LSTM manual, tingkat kompleksitas, batas operasi PyTorch dan kecocokan kriteria usia10tahun dengan keluarga LSTM lama. Jangan mengklaim kategori baru.
-- [ ] A2: kandidat MIDI legal dan cukup monofonik, ukuran/hak komposisi+arrangement, work duplicate groups, split/quantization dan tokenizer audit. Belum ada dataset dipilih/diunduh.
+- [ ] A2: kandidat MIDI legal dan cukup monofonik, ukuran/hak komposisi+arrangement, work duplicate groups, split/quantization dan tokenizer audit. Nottingham MIDI/melody telah dipilih pengguna; belum diunduh atau diaudit. SHA upstream, lisensi/hak data, meter/grid dan kecukupan subset4/4 masih perlu diverifikasi.
 - [ ] A1/A2/A3: review kontrak tokenizer133, state/logits, target shift/PAD, export dan limitation fixed tempo/velocity/grid.
 - [ ] Tim: nama/NIM4anggota, hardware RAM/VRAM/disk, budget training/time, tenggat dan host inference.
 - [ ] A4/semua: ekspor/link chat nyata, kontribusi/review dan error+solusi bila ada; template bukan bukti lengkap.

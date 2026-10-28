@@ -29,3 +29,7 @@ Trade-off: token grid monofonik memudahkan decode tetapi membuang polyphony/dyna
 ## Risiko dan verifikasi
 
 Corpus/lisensi/ukuran/monophony, duplicate families, perangkat/budget, penerimaan LSTM lama dan kompleksitas, kualitas ritme/variasi, error parsing/quantization, privacy/retention serta approval/demo masih terbuka. Tidak ada download/install/model/training/fitur atau hasil empiris. Pemeriksaan task meliputi link lokal, preservasi arsip, vocabulary/shape aritmetika, diff/whitespace, branch refs dan pencarian istilah speech tersisa sebagai referensi historis. Runtime/parse/round-trip/loss/gradient belum diuji dan tidak dinyatakan lulus.
+
+## Pembaruan setelah pivot: sumber MIDI dipilih
+
+28 Oktober 2026: pengguna memilih Nottingham `jukedeck/nottingham-dataset`, folder MIDI/melody. Pernyataan dataset belum dipilih pada tabel pivot di atas adalah status historis saat pivot, bukan status terkini. Sumber sudah dipilih, audit isi/lisensi/work-split/grid dan pin SHA masih pending; lihat DATASET_REQUIREMENTS. Tidak mengubah kontrak model/token atau status Stage1, tidak download/implementasi/commit/push pada pembaruan sumber ini.

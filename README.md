@@ -2,7 +2,7 @@
 
 Proyek Generative AI universitas untuk menghasilkan melodi sebagai rangkaian token musik dan mengekspornya menjadi berkas MIDI. Model utama diusulkan berupa LSTM autoregresif yang **dirancang dan dilatih dari nol** melalui pengembangan bersama LLM.
 
-> **Status: Stage 1 — PIVOT MIDI / GO tertunda.** Repository berisi blueprint dan kontrak teknis. Dataset belum dipilih atau diunduh; model belum dilatih, evaluasi belum dilakukan, dan aplikasi belum diimplementasikan. Arsitektur LSTM masih memerlukan review dosen.
+> **Status: Stage 1 — PIVOT MIDI / GO tertunda.** Repository berisi blueprint dan kontrak teknis. Dataset Nottingham `MIDI/melody` telah dipilih, tetapi belum diunduh atau diaudit; model belum dilatih, evaluasi belum dilakukan, dan aplikasi belum diimplementasikan. Arsitektur LSTM masih memerlukan review dosen.
 
 **Daftar isi**
 
@@ -159,7 +159,7 @@ Jangan memasukkan dataset berhak cipta/pribadi, weights, `.env`, database dump, 
 | M4 | Integrasi Next.js, FastAPI dan PostgreSQL | Belum dimulai; setelah model layak |
 | M5 | Demo nyata, laporan, log LLM dan presentasi individu | Belum dimulai |
 
-Dataset, perangkat, anggaran waktu, dan penerimaan arsitektur masih perlu dikonfirmasi. Pilot sebelum GO memerlukan izin offline terbatas tersendiri; rencana ini tidak mengizinkan coding. Rincian ada pada [roadmap](docs/DEVELOPMENT.md) dan [gate Stage 1](docs/STAGE1_VALIDATION.md).
+Sumber dataset telah dipilih: [Nottingham MIDI/melody](https://github.com/jukedeck/nottingham-dataset/tree/master/MIDI/melody). Audit lisensi, isi dan kecocokan tokenizer, perangkat, anggaran waktu, serta penerimaan arsitektur masih perlu diselesaikan. Pilot sebelum GO memerlukan izin offline terbatas tersendiri; rencana ini tidak mengizinkan coding. Rincian ada pada [roadmap](docs/DEVELOPMENT.md) dan [gate Stage 1](docs/STAGE1_VALIDATION.md).
 
 ## Memulai
 

@@ -139,3 +139,7 @@ Panduan dosen §1 dan §5 mewajibkan rekaman chat (share link aktif atau ekspor 
 - Analisis: DeepFilterNet layak sebagai baseline enhancement tetapi pretrained tidak memenuhi from scratch; prediksi gain/filter bukan otomatis generative modeling. Ada konflik urutan bukti empiris pra-GO dengan larangan coding pra-GO; izin pilot terbatas harus eksplisit dan belum tersedia.
 - Hasil: rencana siap ditinjau, bukan bukti pilot/training atau approval. Tidak ada error model sehingga debugging model tidak berlaku. Ekspor/link percakapan asli sesi ini masih harus dilampirkan; ringkasan ini tidak menggantikannya.
 - Verifikasi: diff/whitespace, link lokal dan review batas perubahan Markdown. Tidak menjalankan runtime/lint/typecheck untuk task dokumentasi.
+
+## Pemilihan Nottingham MIDI melody
+
+28 Oktober 2026: pengguna menetapkan https://github.com/jukedeck/nottingham-dataset/tree/master/MIDI/melody. Metadata folder dan README upstream ditinjau, repository mencantumkan GPLv3 serta asal ABC Nottingham Music Database. Tidak ada MIDI diunduh/diparse atau source implementasi disalin. Sumber dipilih tetapi SHA/hak komposisi-arrangement, inventory dan kecocokan4/4/grid belum dibuktikan. Keputusan: gunakan folder melody saja, audit work groups sebelum split, jangan mengasumsikan monophony/meter dari nama folder. DATASET_REQUIREMENTS, DATA_CONTRACT, README dan dokumen status terkait diselaraskan; riwayat sebelumnya tetap sebagai catatan waktu, bukan status dataset saat ini. Ekspor chat asli perlu dilampirkan A4; tidak ada training/error model/approval baru.

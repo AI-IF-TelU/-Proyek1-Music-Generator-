@@ -25,3 +25,9 @@ A2 menyerahkan token ID canonical, bukan embeddings/one-hot atau MIDI bytes seba
 Manifest: source URL/version/attribution/license, file SHA256, opaque piece/work/composer IDs bila tersedia, arrangement/duplicate group, SMF format/PPQ/instruments/polyphony/meter/tempo, filter/quantization decisions, note count/length, tokens hash/tokenizer version, split dan exclusion reason. File copyrighted/private tidak di Git. Laporkan exclusions dan bias monophonic filtering; jangan menyebut dataset representatif tanpa audit.
 
 A2 perlu membuktikan parse→canonical tokens→export→parse ekuivalen onset/pitch/duration canonical, split leakage nol yang terdeteksi, token grammar benar dan target shifting/mask benar. Ini tes yang direncanakan setelah izin, belum lulus. Bila corpus legal/monofonik tidak cukup, hentikan dan konsultasi scope/data; jangan membuat metadata atau approval palsu.
+
+## Sumber Nottingham yang dipilih pengguna
+
+Folder aktif hanya [jukedeck/nottingham-dataset/MIDI/melody](https://github.com/jukedeck/nottingham-dataset/tree/master/MIDI/melody). Pin upstream commit dalam manifest sebelum ingest; data belum diunduh. A2 menambahkan upstream relative path, revision dan work/tune grouping evidence pada metadata, serta memisahkan alasan reject meter/polyphony/quantization.
+
+Kontrak tensor/vocabulary tetap v1. Folder melody tidak membuktikan semua file memenuhi monophony4/4/grid; A2 melaporkan retained count/durasi dan distribusi meter. Revisi kontrak jika data tidak cukup harus direview A1/A3/dosen, bukan relabel meter diam-diam. Rujukan audit/lisensi dan checklist ada pada [DATASET_REQUIREMENTS](DATASET_REQUIREMENTS.md).

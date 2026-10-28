@@ -10,3 +10,7 @@ Stage1, dokumentasi saja. Semua milestone implementasi berikut bersyarat izin; t
 6. M5 demo MIDI nyata, laporan metode/loss/eksperimen/metrik, ekspor LLM, bukti4anggota, batasan dan presentasi individu. Deployment bila diperlukan/diotorisasi.
 
 Definition of done: model tim dilatih dari nol, corpus/split/lineage sah, file valid dan limitation transparan, log nyata dan tes relevan, tidak ada secrets/weights/copyrighted data di Git. NLL/perplexity dan sampling results belum tersedia. Stack aplikasi tetap; pipeline speech tidak dilanjutkan. Rencana detail mengikuti ML_ARCHITECTURE, DATA_CONTRACT, TRAINING_CONTRACT dan EVALUATION.
+
+## Pembaruan sumber data
+
+Nottingham `MIDI/melody` telah dipilih pengguna; M1 kini mengaudit sumber tersebut, bukan mencari corpus tanpa pilihan. Belum ada download/parse. Prioritaskan pin SHA, hak data, work grouping serta filter4/4/quantization sebelum menyetujui subset dan budget training. Lihat [DATASET_REQUIREMENTS](DATASET_REQUIREMENTS.md).
