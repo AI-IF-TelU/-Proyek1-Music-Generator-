@@ -182,3 +182,4 @@ for batch in train_loader:
   - Transkripsi dan representasi digital ABC/MIDI dirilis secara terbuka di bawah GPLv3.
   - Penggunaan pada proyek Nirava ditujukan murni untuk keperluan akademik non-komersial.
   - Review formal hak cipta/atribusi bersama dosen pembimbing tetap dijadwalkan pada evaluasi Stage 1.
+
