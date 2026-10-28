@@ -55,7 +55,9 @@ nirava/
 
 ### Spesifikasi Member 1
 
-Kontrak aktif **nirava-stft-cgan-v1** mengusulkan G U-Net Conv2d kecil dengan latent Gaussian dan D patch kondisional, seluruh bobot baru. Spesifikasi matematis/shape, loss dan training handoff berada pada [MODEL_PROPOSAL.md](MODEL_PROPOSAL.md), kontrak batch/manifest A2 pada [DATASET_REQUIREMENTS.md](DATASET_REQUIREMENTS.md). Ini menggantikan kandidat waveform Conv1D 1,024 detik sebelumnya; tidak ada model yang sudah dibangun.
+TASK 01 menetapkan sumber tunggal: [ML_ARCHITECTURE.md](ML_ARCHITECTURE.md) untuk model/transform/rekonstruksi, [DATA_CONTRACT.md](DATA_CONTRACT.md) untuk Member 2, dan [TRAINING_CONTRACT.md](TRAINING_CONTRACT.md) untuk Member 3. MODEL_PROPOSAL menjadi ringkasan; DATASET_REQUIREMENTS menyimpan audit sumber. Model tetap v1, belum ada implementasi/approval. Training dan inference hanya pada Python/PyTorch; Next.js, FastAPI dan PostgreSQL tetap seperti diagram produk tanpa endpoint trainer.
+
+Kontrak aktif **nirava-stft-cgan-v1** mengusulkan G U-Net Conv2d kecil dengan latent Gaussian dan D patch kondisional, seluruh bobot baru. Tabel shape/inverse berada pada ML_ARCHITECTURE; loss/checkpoint pada TRAINING_CONTRACT; batch/manifest pada DATA_CONTRACT. Ini menggantikan kandidat waveform Conv1D 1,024 detik sebelumnya; tidak ada model yang sudah dibangun.
 
 Alur ML: waveform aligned `[B,32000]` mono16kHz → STFT512/hop128/Hann/center → kompleks `[B,257,251]` → RI dibagi sqrt512 `[B,2,257,251]` → network-pad272×256 → G → crop residual RI257×251 → iSTFT length32000 → audio hasil. D membandingkan pasangan RI noisy dan STFT ulang hasil audio/clean dengan shape input `[B,4,257,251]` serta output logit `[B,1,32,31]`. D tidak dideploy. Noisy phase tidak dipakai sebagai pengganti output fase; tanpa pretrained vocoder.
 

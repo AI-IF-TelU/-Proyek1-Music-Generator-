@@ -20,6 +20,7 @@ Next.js + TypeScript; FastAPI + Python; PostgreSQL; PyTorch conditional GAN STFT
 ## Blueprint TASK 00C
 
 - [Proposal model dan trade-off diffusion](docs/MODEL_PROPOSAL.md).
+- TASK 01: [arsitektur ML](docs/ML_ARCHITECTURE.md), [kontrak data Member 2](docs/DATA_CONTRACT.md), [kontrak training Member 3](docs/TRAINING_CONTRACT.md). Spesifikasi saja, belum training/approval.
 - [Dataset Kaggle pilihan pengguna dan checklist](docs/DATASET_REQUIREMENTS.md).
 - [Job desk empat anggota](docs/TEAM_RESPONSIBILITIES.md), [roadmap training-first](docs/DEVELOPMENT.md), dan [log LLM](docs/LLM_INTERACTION_LOG.md).
 - [Proposal singkat dan checklist dosen](docs/LECTURER_APPROVAL.md); [audit rubrik dan risiko](docs/BLUEPRINT_AUDIT.md).

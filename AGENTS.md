@@ -8,12 +8,13 @@ Nama proyek masih perlu pemeriksaan merek dan tidak mengubah status Stage 1.
 1. `README.md` dan `docs/PRD.md`.
 2. `docs/STAGE1_VALIDATION.md` (gate sebelum implementasi).
 3. `docs/ARCHITECTURE.md`, `docs/API_SPEC.md`, `docs/DATABASE_SCHEMA.md`.
-4. `docs/DESIGN_SYSTEM.md`, `docs/DEVELOPMENT.md`, `docs/EVALUATION.md` sesuai tugas.
+4. `docs/ML_ARCHITECTURE.md`, `docs/DATA_CONTRACT.md`, `docs/TRAINING_CONTRACT.md` untuk pekerjaan ML.
+5. `docs/DESIGN_SYSTEM.md`, `docs/DEVELOPMENT.md`, `docs/EVALUATION.md` sesuai tugas.
 
 ## Aturan wajib
 - Kebutuhan akademik panduan resmi dosen mengungguli blueprint hackathon lama. Baca panduan bila tersedia; jangan menganggap referensi literatur sebagai persetujuan dosen.
 - Model utama wajib dirancang tim dan dilatih dari inisialisasi acak melalui Vibe Coding; jangan gunakan pretrained weights, teacher atau vocoder sebagai pemenuhan model utama. Simpan prompt asli, alasan keputusan, log error/solusi nyata dan ekspor/link chat.
-- Kontrak ML aktif `nirava-stft-cgan-v1` di `docs/MODEL_PROPOSAL.md`: PyTorch dasar, kompleks STFT, waveform mono16kHz, segmen awal32000 sampel (2detik), paired alignment dan split speaker-aware. Ini spesifikasi usulan, belum implementasi/approval. Perubahan shape/preprocessing/loss perlu review A1/A2/A3 serta versioning kontrak.
+- Kontrak ML aktif `nirava-stft-cgan-v1` di `docs/ML_ARCHITECTURE.md`: PyTorch dasar, STFT kompleks, waveform mono 16 kHz, segmen awal 32000 sampel (2 detik). `docs/DATA_CONTRACT.md` mengatur pairing/alignment/speaker split; `docs/TRAINING_CONTRACT.md` mengatur loss/loop/checkpoint/reproduksibilitas. MODEL_PROPOSAL hanya ringkasan, DATASET_REQUIREMENTS hanya audit/provenance. Semua masih usulan; perubahan teknis perlu review A1/A2/A3 dan versioning kontrak.
 - Jangan mulai Stage 2 sampai Stage 1 mendapat verdict GO dan demo concept disetujui pengguna.
 - Jangan mengklaim DeepFilterNet sebagai Generative AI tanpa justifikasi ilmiah dan kecocokan rubrik.
 - Next.js hanya memanggil FastAPI; inference ML hanya di backend.

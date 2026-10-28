@@ -12,6 +12,8 @@ Produk tetap Next.js → FastAPI → model hasil training tim; PostgreSQL hanya 
 
 ## Konfirmasi dosen yang diperlukan
 
+Paket review TASK 01: [model dan tensor interfaces](ML_ARCHITECTURE.md), [data pipeline](DATA_CONTRACT.md), [training/loss/checkpoint/reproduksibilitas](TRAINING_CONTRACT.md). Detail dipisah dari MODEL_PROPOSAL tanpa mengganti status atau mengklaim persetujuan. Tiga kontrak harus direview bersama.
+
 - [ ] Speech enhancement STFT kompleks/cGAN diterima sebagai usulan di luar contoh §3, termasuk definisi generatif dan risiko latent diabaikan.
 - [ ] Rancangan cGAN dinilai cukup menengah/lanjut dan sesuai kategori model 10 tahun terakhir; penggunaan SEGAN 2017 sebagai dasar konseptual diterima.
 - [ ] Definisi from scratch dan batas operasi pustaka dasar disepakati; tidak ada pretrained weights pada model utama.

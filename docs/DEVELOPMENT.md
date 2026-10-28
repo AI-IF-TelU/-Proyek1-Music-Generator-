@@ -4,6 +4,8 @@ Status 28 Oktober 2026: **Stage 1, GO tertunda**. Ini rencana, bukan pekerjaan y
 
 ## M0 Stage 1 dokumentasi dan konsultasi
 
+TASK 01 menyelesaikan pemisahan spesifikasi (belum implementasi): [ML_ARCHITECTURE](ML_ARCHITECTURE.md) milik A1, [DATA_CONTRACT](DATA_CONTRACT.md) handoff A2, [TRAINING_CONTRACT](TRAINING_CONTRACT.md) handoff A3; A4 mengarsipkan prompt/keputusan. Sebelum coding, lakukan review silang dan isi bukti dataset/perangkat serta approval. Rekomendasi task berikutnya: **TASK 02 — Review Kontrak Data, Hardware dan Persetujuan**, dokumentasi bukti terlebih dahulu, tanpa menganggap nomor task membuka gate.
+
 Handoff Member 1: spesifikasi `nirava-stft-cgan-v1` (RI-STFT cGAN, segmen2detik) menggantikan proposal waveform awal. A2 review data contract/shape dan bukti speaker/pairing; A3 review loss/config/checkpoint/rekonstruksi; A4 mengarsipkan prompt dan keputusan. Handoff dokumentasi bukan izin training. Panduan akademik dosen prioritas; riset kompetitor/referensi visual adalah pendukung produk, bukan pengganti syarat akademik atau blocker akademik mandiri.
 
 - [x] Baca seluruh Markdown awal dan panduan dosen; petakan rubrik 30/25/25/20.
@@ -27,7 +29,7 @@ A1/A3 setelah izin membangun G/D STFT kompleks sesuai MODEL_PROPOSAL, inverse di
 
 ## M3 Eksperimen dan evaluasi
 
-A3 menjalankan eksperimen [MODEL_PROPOSAL](MODEL_PROPOSAL.md); A2 menjaga split dan A4 mengaudit log/config. Pilih checkpoint pada validation sesuai [EVALUATION](EVALUATION.md), bekukan keputusan sebelum test. Keluaran: ablation, tabel termasuk run gagal, hasil held-out, profiling dan batasan. Jika fidelity/biaya gagal, konsultasikan pivot; pretrained tidak menggantikan deliverable dari nol.
+A3 setelah izin menjalankan eksperimen [TRAINING_CONTRACT](TRAINING_CONTRACT.md); A2 menjaga split sesuai DATA_CONTRACT dan A4 mengaudit log/config. Pilih checkpoint pada validation sesuai [EVALUATION](EVALUATION.md), bekukan keputusan sebelum test. Keluaran: ablation, tabel termasuk run gagal, hasil held-out, profiling dan batasan. Jika fidelity/biaya gagal, konsultasikan pivot; pretrained tidak menggantikan deliverable dari nol.
 
 ## M4 Integrasi setelah bukti model
 

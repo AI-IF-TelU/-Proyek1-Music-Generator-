@@ -3,6 +3,10 @@
 ## Domain dan status
 AI/ML × speech enhancement. **Verdict: PIVOT TERARAH; GO tertunda.** Ini bukan laporan hasil riset kompetisi.
 
+TASK 01: spesifikasi aktif dipisah ke [ML_ARCHITECTURE.md](ML_ARCHITECTURE.md), [DATA_CONTRACT.md](DATA_CONTRACT.md) dan [TRAINING_CONTRACT.md](TRAINING_CONTRACT.md). Model utama adalah cGAN dari nol; DeepFilterNet hanya baseline opsional. Pemisahan dokumen tidak memenuhi bukti pilot, validasi dataset/hardware atau persetujuan dosen. Seluruh blocker B1–B10 beserta pengecualian B7 tetap mengikuti bukti, bukan ketersediaan spesifikasi.
+
+Konfirmasi khusus yang masih kosong: penerimaan STFT speech cGAN di luar contoh dosen, batas PyTorch dasar, latent/generative objective, pasangan/speaker metadata dan mixing dataset Kaggle, loss/sweep/metrik, format log serta perangkat/budget. Lihat [checklist dosen](LECTURER_APPROVAL.md). Jangan mulai Stage2 atau pilot atas dasar TASK01.
+
 ## Hipotesis produk
 - Target awal: mahasiswa dan pembuat konten yang merekam percakapan di lingkungan berisik.
 - Pain: ucapan sulit dipahami akibat kebisingan latar.

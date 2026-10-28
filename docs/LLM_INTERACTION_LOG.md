@@ -1,5 +1,35 @@
 # Log interaksi LLM
 
+## TASK 01 — Nirava From-Scratch ML Architecture
+
+Tanggal: 28 Oktober 2026. Peran A1; nama/NIM belum dipetakan. Branch awal main bersih, lalu beralih ke `dev/member-1-architecture` sebelum menulis file. Tidak ada perubahan pada branch lain, commit/push/merge. Panduan dosen dibaca ulang read-only dari DOCX Downloads pengguna; tidak ditemukan sebagai berkas repository. Ekspor/link chat asli sesi ini belum dilampirkan; A4 harus menyertakannya. Catatan berikut adalah ringkasan dengan kutipan instruksi, bukan klaim ekspor percakapan lengkap.
+
+### Prompt dan batas pengguna
+
+Judul asli: TASK 01 — Nirava From-Scratch ML Architecture. Role: Senior Machine Learning Architect & Vibe Coding Advisor. Konteks empat anggota, LLM-guided from scratch, stack Next.js/TypeScript–FastAPI/Python–PostgreSQL/PyTorch dan kandidat Kaggle Speech Noise Dataset. Instruksi teknis asli:
+
+> 4. Replace the pretrained DeepFilterNet approach as the primary model proposal.
+> 5. Design a lightweight Conditional GAN for speech denoising, built from scratch.
+> 6. Explain the Generator, Discriminator, STFT representation, tensor shapes, reconstruction strategy, and proposed loss functions.
+> 7. Define a clear data contract for Member 2: Mono audio at 16 kHz; Aligned noisy-clean pairs; Initial 2-second segments; Train/validation/test separation; Synthetic noise mixing fallback.
+> 8. Define the model and training interface for Member 3.
+> 9. Specify evaluation metrics, checkpoint format, and reproducibility requirements.
+> 10. Document technical trade-offs, hardware assumptions, and questions requiring lecturer approval.
+
+Instruksi awal1–3: cek branch sebelum perubahan, baca AGENTS/README/docs relevan dan ikuti panduan resmi. Deliverable yang diminta: ML_ARCHITECTURE, DATA_CONTRACT, TRAINING_CONTRACT, STAGE1_VALIDATION, ARCHITECTURE, DEVELOPMENT, AGENTS serta rekaman prompt/keputusan. Batas: dokumentasi saja, tanpa implementasi/training/download/fitur/dependency/pretrained utama/approval asumsi, tanpa perubahan main/branch anggota lain dan tanpa commit/push/merge otomatis. Prompt utuh termasuk expected output tetap pada percakapan asli untuk diekspor A4.
+
+### Keputusan dan alasan
+
+1. Pertahankan desain `nirava-stft-cgan-v1` yang sudah menggantikan DeepFilterNet sebagai utama; jangan memulai ulang desain atau mengklaim pretrained memenuhi rubrik. Panduan dosen tetap prioritas dan seluruh bobot utama baru.
+2. Pindahkan detail model dari MODEL_PROPOSAL ke ML_ARCHITECTURE, bagian objective/loop/config/checkpoint ke TRAINING_CONTRACT, dan kontrak A2 dari DATASET_REQUIREMENTS ke DATA_CONTRACT. Dokumen lama tetap sebagai ringkasan/audit dengan tautan, untuk mencegah dua sumber yang menyimpang. Antarmuka numerik tidak berubah; versi v1 dipertahankan.
+3. Pertahankan segmen32000/STFT257×251/pad272×256, latent dan residual RI/iSTFT. Tambahkan signature konseptual untuk G residual, D logit, transform/inverse serta utterance inference agar tanggung jawab caller jelas. Tidak ada implementasi signature.
+4. Perjelas format checkpoint mapping/version, source snapshot ketika dirty, seed worker/latent stabil, lingkungan/determinism dan batas resume epoch. Ini acceptance rencana, bukan bukti reproducibility runtime.
+5. Dataset/ukuran/lisensi/speaker/clean target dan hardware tetap unknown. Mixing fallback bersyarat; source grouping bukan bukti speaker-disjoint. Tidak memasukkan angka hasil/approval palsu.
+
+### Verifikasi dan handoff
+
+Review dimensi STFT/convolution memakai aritmetika, link lokal dan git diff/whitespace serta daftar file Markdown; bukan PyTorch tests. API dasar STFT/iSTFT diperiksa lewat dokumentasi resmi, tidak menyalin kode proyek luar. Tidak ada error training karena model belum dibuat. A2 diminta review audit/manifest/data contract, A3 review tensor/objective/config/budget, A4 menyertakan percakapan asli, alasan kelompok dan bukti verifikasi. Runtime, round-trip, gradient, kualitas, RAM/VRAM dan persetujuan dosen belum diverifikasi. Rekomendasi berikutnya TASK02 review bukti data/hardware/approval, bukan otomatis implementasi.
+
 ## Sesi Member 1 — finalisasi arsitektur
 
 Tanggal28 Oktober2026; peran Member1 Prompt Engineer & LLM Navigator, nama/NIM belum tersedia. Branch `dev/member-1-architecture` dibuat dari main tanpa commit; seluruh perubahan terdahulu dipertahankan. Ringkasan ini perlu dilengkapi ekspor/link chat asli oleh Member4; bukan pengganti bukti percakapan lengkap.

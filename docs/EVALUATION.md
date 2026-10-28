@@ -26,6 +26,8 @@ Do not claim generative capability, % noise reduction, or universal improvement 
 
 ## Training dan checkpoint
 
+Sumber teknis aktif TASK 01 adalah [TRAINING_CONTRACT.md](TRAINING_CONTRACT.md), dengan model [ML_ARCHITECTURE.md](ML_ARCHITECTURE.md) dan data [DATA_CONTRACT.md](DATA_CONTRACT.md). Dokumen ini mempertahankan protokol metrik/listening/pilot; format checkpoint dan config tidak diduplikasi di sini.
+
 Gunakan manifest terverifikasi [DATASET_REQUIREMENTS.md](DATASET_REQUIREMENTS.md), train/validation/test terpisah speaker atau sumber terverifikasi; test dibekukan dari split resmi jika ada atau manifest held-out tim jika tidak ada. Catat run ID, config, seed, source commit, hash manifest/checkpoint, environment, optimizer/schedule, update, epoch, stopping reason dan hardware. Grafik aktual memisahkan loss G adversarial/L1/spectral, loss D dan metrik validation terhadap step/epoch. Loss GAN bukan skor kualitas dan tidak harus monoton.
 
 Aturan awal yang dibekukan sebelum eksperimen: pilih checkpoint dengan mean validation STOI tertinggi di antara run tanpa NaN/kerusakan output; tie diputus SI-SDR lalu biaya inference. Early stopping mengikuti validation STOI dengan patience tercatat. Listening pada validation dapat memveto artefak berat dengan alasan tertulis. Bekukan checkpoint/config sebelum test; laporkan seluruh test valid beserta pengecualian.
