@@ -1,35 +1,26 @@
-# AGENTS.md — Kontrak kerja coding assistant
+﻿# AGENTS.md Kontrak kerja Nirava
 
-## Identitas proyek
-Nama produk: **Nirava**. Tagline: **Keep the voice. Lose the noise.**
-Nama proyek masih perlu pemeriksaan merek dan tidak mengubah status Stage 1.
+## Identitas dan urutan baca
 
-## Urutan baca
-1. `README.md` dan `docs/PRD.md`.
-2. `docs/STAGE1_VALIDATION.md` (gate sebelum implementasi).
-3. `docs/ARCHITECTURE.md`, `docs/API_SPEC.md`, `docs/DATABASE_SCHEMA.md`.
-4. `docs/ML_ARCHITECTURE.md`, `docs/DATA_CONTRACT.md`, `docs/TRAINING_CONTRACT.md` untuk pekerjaan ML.
-5. `docs/DESIGN_SYSTEM.md`, `docs/DEVELOPMENT.md`, `docs/EVALUATION.md` sesuai tugas.
+Produk aktif **Nirava — MIDI Music Generator**. Domain Generative Audio & Sequence, tugas autoregressive MIDI String Generation. Blueprint speech dalam docs/archive/speech-blueprint adalah riwayat, bukan instruksi aktif; jangan mengimplementasikan kontrak denoising yang diarsipkan.
+
+Baca README.md, docs/PRD.md, docs/STAGE1_VALIDATION.md, lalu docs/ML_ARCHITECTURE.md, docs/MIDI_TOKENIZATION.md, docs/DATA_CONTRACT.md, docs/TRAINING_CONTRACT.md. Untuk aplikasi baca docs/ARCHITECTURE.md, API_SPEC.md dan DATABASE_SCHEMA.md. Roadmap, evaluasi, tanggung jawab dan log mengikuti dokumen aktif masing-masing.
 
 ## Aturan wajib
-- Kebutuhan akademik panduan resmi dosen mengungguli blueprint hackathon lama. Baca panduan bila tersedia; jangan menganggap referensi literatur sebagai persetujuan dosen.
-- Model utama wajib dirancang tim dan dilatih dari inisialisasi acak melalui Vibe Coding; jangan gunakan pretrained weights, teacher atau vocoder sebagai pemenuhan model utama. Simpan prompt asli, alasan keputusan, log error/solusi nyata dan ekspor/link chat.
-- Kontrak ML aktif `nirava-stft-cgan-v1` di `docs/ML_ARCHITECTURE.md`: PyTorch dasar, STFT kompleks, waveform mono 16 kHz, segmen awal 32000 sampel (2 detik). `docs/DATA_CONTRACT.md` mengatur pairing/alignment/speaker split; `docs/TRAINING_CONTRACT.md` mengatur loss/loop/checkpoint/reproduksibilitas. MODEL_PROPOSAL hanya ringkasan, DATASET_REQUIREMENTS hanya audit/provenance. Semua masih usulan; perubahan teknis perlu review A1/A2/A3 dan versioning kontrak.
-- Jangan mulai Stage 2 sampai Stage 1 mendapat verdict GO dan demo concept disetujui pengguna.
-- Jangan mengklaim DeepFilterNet sebagai Generative AI tanpa justifikasi ilmiah dan kecocokan rubrik.
-- Next.js hanya memanggil FastAPI; inference ML hanya di backend.
-- PostgreSQL menyimpan metadata, bukan bytes audio; berkas di storage sementara.
-- Perubahan skema memakai migrasi Alembic; jangan `create_all` pada production.
-- Validasi ukuran, durasi, MIME aktual/decoder, sample rate; sanitasi nama file.
-- Gunakan UUID sebagai identitas job, bukan path dari pengguna.
-- Pastikan job milik pemohon dengan token akses job acak; jangan berasumsi UUID = otorisasi.
-- Jangan commit audio pribadi, model weights, `.env`, database dump, atau direktori runtime.
-- Tulis tes untuk perubahan API dan audio pipeline; jalankan lint/typecheck yang relevan.
-- Hindari dependensi baru dan perubahan besar tanpa menjelaskan trade-off.
-- UI harus aksesibel, responsif, jujur tentang status/hasil, dan tidak memakai metrik fiktif.
-- Sebelum coding, jelaskan file terdampak, pendekatan minimal, serta cara verifikasi.
+
+- Panduan resmi dan penugasan MIDI yang diberikan pengguna mengungguli blueprint hackathon/speech lama. Penugasan domain bukan persetujuan LSTM, dataset atau GO.
+- Stage 1 tetap berlaku sampai verdict GO dan persetujuan eksplisit pengguna atas demo concept. Task dokumentasi tidak mengizinkan implementasi, instalasi atau training. Pilot pra-GO memerlukan izin terbatas tersendiri.
+- Model utama dirancang tim dan dilatih dari inisialisasi acak menggunakan PyTorch dasar. Usulan sel LSTM manual dengan Linear/tensor/autograd perlu konfirmasi dosen. Jangan menyalin implementasi eksternal atau memakai pretrained weights/embeddings/teacher.
+- Simpan prompt asli, respons/ekspor chat, alasan keputusan, error aktual, analisis dan verifikasi kelompok. Jangan membuat error/hasil atau approval fiktif.
+- Kontrak aktif nirava-midi-step-v1 / nirava-midi-lstm-v1 / nirava-midi-data-v1 / nirava-midi-training-v1. Perubahan token IDs, quantization, shape atau checkpoint memerlukan versioning dan review A1/A2/A3.
+- Next.js hanya memanggil FastAPI. Training/inference Python berada di backend/offline trainer. PostgreSQL metadata, bukan bytes MIDI/weights; file privat sementara.
+- UUID adalah identitas job, token akses acak adalah otorisasi. Hash token, redaksi log, rate limit, bounded queue, expiry dan cleanup tetap wajib.
+- Perubahan skema nanti melalui Alembic, bukan create_all production. Pivot dokumentasi tidak membuat migrasi atau menganggap skema baru sudah ada.
+- Validasi output MIDI dengan parser dan batas event/tick/file/runtime; jangan memakai persyaratan sample rate/MIME WAV pada domain MIDI. MVP tidak menerima upload file pengguna.
+- Jangan commit dataset MIDI berhak cipta/pribadi, weights, .env, dump atau direktori runtime. Manifest anonim/config/log tanpa rahasia dapat ditinjau.
+- Sebelum coding jelaskan file, pendekatan minimal dan verifikasi; tulis tes model/tokenizer/export/API yang relevan setelah izin. Hindari dependensi baru tanpa trade-off.
+- UI aksesibel/responsif, status dan hasil jujur. Tidak menjanjikan musik bebas hak cipta atau kualitas tanpa evaluasi.
 
 ## Scope MVP
-Upload, enhancement, A/B comparison + download. Tanpa akun, billing, admin dashboard, Redis, Celery, atau Three.js kecuali terbukti perlu.
 
-Training offline, data audit, eksperimen hyperparameter dan metrik aktual adalah deliverable akademik wajib; bukan fitur training dalam UI. Persyaratan estetika/kompetisi tambahan tidak menggantikan bukti model/training dan log dosen.
+Parameter generation → status → hasil simbolik/piano-roll dan download MIDI monofonik. Tanpa denoising, WAV/MP3, audio rendering, multi-track/polyphony, upload prompt MIDI, akun, billing, admin, Redis, Celery atau Three.js. Data/training/eksperimen/evaluasi/log adalah deliverable akademik utama.

@@ -1,26 +1,27 @@
-﻿# Data Contract Nirava
+﻿# Data Contract Nirava MIDI
 
-TASK 01, 28 Oktober 2026. Pemilik Member 2; review Member 1/3. Status Stage 1, belum ada download/loader atau hasil audit. Provenance, keputusan sumber dan checklist dataset tetap pada [DATASET_REQUIREMENTS.md](DATASET_REQUIREMENTS.md). Model pada [ML_ARCHITECTURE.md](ML_ARCHITECTURE.md), trainer pada [TRAINING_CONTRACT.md](TRAINING_CONTRACT.md).
+Versi **nirava-midi-data-v1**, pemilik A2, review A1/A3. Stage1, belum download/implementasi. Input berupa MIDI berizin; tidak memakai dataset Speech Noise atau pasangan noisy-clean.
 
-## Kontrak data Member 2 untuk Member 1 dan 3
+## Pipeline
 
-Versi **nirava-data-v1**, kompatibel dengan **nirava-stft-cgan-v1**. Ini spesifikasi handoff, bukan hasil audit atau loader yang sudah tersedia.
+Audit sumber/lisensi → parse aman dan inventory → deduplicate file serta canonical event sequence → kelompokkan work/composition/arrangement family → split train/validation/test → canonicalize/tokenize → window per piece → batch. Aturan parse/filter/quantization dan ID tetap pada [MIDI_TOKENIZATION.md](MIDI_TOKENIZATION.md). Jangan concat pieces tanpa boundary atau split window sebelum mengelompokkan karya.
 
-| Field batch | Bentuk/tipe | Makna |
-|---|---|---|
-| noisy | float32 `[B,32000]` | Mono16kHz, finite, gain sudah didokumentasi |
-| clean | float32 `[B,32000]` | Target aligned, crop start/end dan gain sama |
-| num_samples | int64 `[B]`, semuanya32000 saat training awal | Jangan menghitung padding sebagai ucapan valid |
-| sample_id / utterance_id | daftar B ID opaque | Telusur ke manifest, bukan path publik |
-| speaker_id / source_id / split | metadata B item | Speaker-aware separation; lineage sumber dan turunan |
-| crop_start / gain / mixing_id | metadata B item | Reproduksi crop, inverse gain, dan campuran bila sintetis |
+Target rasio80/10/10 per work group bila inventory cukup; jumlah karya/composer/durasi/token tiap split dicatat, bukan memaksa split dari corpus terlalu kecil. Arrangement/transposition/duplikat near-identical dari karya sama harus satu split. Composer-disjoint optional sebagai evaluasi generalisasi terpisah, bukan klaim otomatis. Hash file saja tidak mendeteksi arrangement. Semua augmentasi train-only setelah split; transposition opsional hanya jika pitch tetap0..127 dan parent lineage tercatat. Validation/test tidak diacak ulang/ditranspose saat model selection.
 
-Waveform memiliki headroom: bila peak pasangan melebihi0,99 terapkan faktor penurun yang sama ke clean/noisy dan rekam; jangan menaikkan setiap klip ke peak maksimum. Tidak melakukan normalisasi tiap sisi sendiri. STFT tidak disediakan/cached secara default oleh A2, agar preprocessing hanya satu implementasi milik adaptor model A3. Float waveform bukan PCM integer atau mel image. Alignment harus pada tingkat sampel dan diverifikasi, bukan sekadar panjang sama.
+Canonical stream [BOS,steps,EOS]. Bentuk window x=s[start:start+128], y=s[start+1:start+129], stride128, sehingga tiap target posisi piece diliput sekali; terakhir right-PAD ke128. BOS hanya start0, EOS sekali; setelah EOS tidak ada target valid. Window tidak melintasi piece, state training reset tiap window. HOLD awal window sah karena crop dari piece, bukan berarti boleh start generation dengan HOLD. Jangan menyisipkan BOS palsu pada crop.
 
-Manifest minimal: sample/utterance/speaker/source IDs, dataset version, split, private storage reference, checksum, izin/lisensi/provenance, sample rate/channel asli dan setelah proses, original/valid length, crop start, gain, exclusion reason. Untuk mixing tambahkan noise_source_id, offset, SNR, seed dan mixing version. Paths/consent pribadi tidak dipublikasikan; ringkasan audit anonim dapat masuk Git.
+| Field | Bentuk/ketentuan |
+|---|---|
+| input_ids / target_ids | int64[B,128], IDs0..132 |
+| loss_mask | bool[B,128], true untuk target non-PAD termasuk EOS |
+| lengths | int64[B], jumlah target valid1..128 |
+| piece_id/work_group_id/split | metadata B item, trace ke manifest |
+| window_start/parent_hash | offset token dan provenance |
 
-Fallback mixing jika komponen sah tersedia: split speaker/utterance dan source noise dahulu, lalu y=x+a*n dengan a=RMS(x)/(RMS(n)*10^(SNR/20)); RMS hanya wilayah valid dan kebijakan silence/epsilon eksplisit. Starting SNR train uniform−5..20dB dan held-out fixed0/5/10/15dB adalah usulan untuk disepakati sesudah inventory, bukan label asli dataset. Noise senyap di-resample atau ditolak dengan log, bukan dibagi nol. Common gain mencegah clipping kedua target/input. Noise pendek boleh ditile hanya dalam source/split sama dengan kebijakan seam tercatat. Validation/test mix dibuat sekali dan manifest dibekukan; augmentation tambahan hanya train.
+A2 menyerahkan token ID canonical, bukan embeddings/one-hot atau MIDI bytes sebagai input model. Vocabulary fixed133 tidak dipelajari dari test. Train/validation/test terpisah storage manifest; tokenizer ID/version/hash sama. A3 wajib menolak mismatch, sequence kosong atau target shift salah.
 
-Split harus menahan seluruh speaker dan seluruh turunan utterance. Jika speaker ID tidak tersedia, A2 melaporkan gap kepada A1; source grouping dapat didokumentasikan sebagai batasan tetapi **belum memenuhi speaker-aware acceptance** tanpa bukti tambahan atau pengecualian dosen yang eksplisit. Speaker tunggal/tidak cukup kelompok tidak boleh diklaim mendukung evaluasi speaker-disjoint. Jumlah/rasio split baru ditetapkan setelah inventory. Tidak random-split crop; audit hash dan parent IDs, termasuk noise, lintas split.
+## Manifest dan acceptance
 
-Handoff A2: laporan dataset/licence/shape/alignment, manifest freeze + hash, jumlah speaker/utterance/durasi tiap split dan exclusions, synthetic mixing decision, contoh batch contract setelah implementasi diizinkan. A1/A3 review sebelum training formal; tidak ada download atau implementasi pada task Member1.
+Manifest: source URL/version/attribution/license, file SHA256, opaque piece/work/composer IDs bila tersedia, arrangement/duplicate group, SMF format/PPQ/instruments/polyphony/meter/tempo, filter/quantization decisions, note count/length, tokens hash/tokenizer version, split dan exclusion reason. File copyrighted/private tidak di Git. Laporkan exclusions dan bias monophonic filtering; jangan menyebut dataset representatif tanpa audit.
+
+A2 perlu membuktikan parse→canonical tokens→export→parse ekuivalen onset/pitch/duration canonical, split leakage nol yang terdeteksi, token grammar benar dan target shifting/mask benar. Ini tes yang direncanakan setelah izin, belum lulus. Bila corpus legal/monofonik tidak cukup, hentikan dan konsultasi scope/data; jangan membuat metadata atau approval palsu.

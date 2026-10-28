@@ -1,36 +1,21 @@
-# Product Requirements Document (draft)
+﻿# PRD Nirava MIDI Music Generator
 
-## Outcome
-Membantu pengguna memahami rekaman ucapan yang terganggu noise tanpa menjanjikan hasil sempurna.
+**Stage 1, usulan untuk review.** Membantu mahasiswa/pemusik pemula memperoleh ide melodi pendek yang dapat diedit dalam DAW melalui MIDI, bukan menghasilkan rekaman suara.
 
-## Persona
-Mahasiswa yang merekam diskusi/kuliah; kreator yang merekam voiceover sederhana.
+## MVP dan alur
 
-## User journey
-Landing langsung ke workspace → pilih sampel atau upload → validasi → progress → hasil A/B → unduh → file dihapus sesuai retensi.
+Pilih 4/8/16 bar, seed integer dan temperature terbatas → kirim job → tampilkan pending/processing/completed/failed/expired → periksa note grid, jumlah nada/bar, model version dan termination reason → unduh .mid. Piano-roll adalah representasi simbolik; browser playback/render audio opsional di luar MVP, bukan dependensi keberhasilan demo.
 
-## MVP acceptance criteria
-- Upload WAV dan MP3 valid; format lain ditolak dengan alasan jelas.
-- Batas awal: 25 MB, durasi maksimal 120 detik (konfigurasi, perlu uji performa).
-- Backend mengembalikan job ID + akses token rahasia; frontend polling status.
-- Hasil dapat didengarkan dengan perbandingan waktu yang sepadan.
-- Jika model gagal, tampilkan pesan aman, tidak menyimpan stack trace untuk user.
-- Akses audio kedaluwarsa otomatis (target 24 jam sejak pembuatan). Penghapusan fisik dilakukan cleanup berkala dengan retry; metadata otorisasi minimal sementara mengikuti kebijakan tombstone di DATABASE_SCHEMA.md, masih tunduk persetujuan kampus.
-- Aplikasi nyaman pada mobile dan desktop, keyboard accessible.
+Acceptance target: output SMF type0 satu track piano, grid 4/4, 120 BPM, PPQ480, satu melodi tanpa tumpang-tindih, note-on/off seimbang; rentang pitch MIDI0..127, velocity80. Panjang bar dikonversi menjadi maksimal 64/128/256 langkah enam-belas; kebijakan EOS dan forced end dijelaskan pada MIDI_TOKENIZATION. Token invalid/repair/failure tidak disembunyikan. Belum ada output atau performa terukur.
 
-## Out of scope
-Login, multi-tenant enterprise, batch upload, transkripsi, training melalui antarmuka pengguna, live mic streaming, billing, social sharing.
+## Akademik
 
-## Deliverable akademik wajib
+Model autoregressive LSTM dari inisialisasi acak, tokenizer tim, data audit dan split work-disjoint, loop/loss/eksperimen serta metrik held-out dan log LLM wajib. Stack Next.js/TypeScript, FastAPI/Python/PyTorch, PostgreSQL dipertahankan. Penugasan MIDI dikonfirmasi pengguna; kompleksitas LSTM dan syarat usia kategori perlu review dosen.
 
-Member 1 mengusulkan kontrak `nirava-stft-cgan-v1`: cGAN PyTorch pada komponen real–imaginer STFT, input training awal mono 16 kHz sepanjang 32000 sampel (2 detik), pasangan noisy–clean sejajar dan split speaker-aware. Rekonstruksi memakai iSTFT tanpa pretrained vocoder. Segmen training bukan batas upload produk; input panjang ditangani chunking offline di backend sesuai konfigurasi model. Kelayakan speaker/clean target dataset aktif belum terverifikasi.
+## Batas lingkup
 
-Panduan dosen menjadi prioritas atas kebutuhan hackathon lama. Bukti yang dinilai terutama orisinalitas Vibe Coding, log interaksi, model/pelatihan dan kerja sama; polish aplikasi tidak menggantikan training.
+V1 monofonik, satu instrumen, fixed tempo/meter/velocity. Tidak menghasilkan chord/multitrack atau mempelajari ekspresi velocity, tempo dan pedal. Tidak ada speech dataset, WAV preprocessing, STFT/cGAN, A/B denoising, transkripsi atau pretrained utama. Tidak ada dataset yang dipilih/diunduh. Tidak ada akun/billing/upload pengguna atau training via UI.
 
-Desain dan training model generatif dari inisialisasi acak, data pipeline berpasangan, loss/loop, eksperimen hyperparameter, grafik metrik valid, serta log LLM dan debugging masuk lingkup proyek. Training dilakukan offline setelah gate disetujui, tidak melalui endpoint produk. Lihat [proposal model](MODEL_PROPOSAL.md) dan [dataset pilihan pengguna](DATASET_REQUIREMENTS.md). DeepFilterNet pretrained saja tidak memenuhi kebutuhan ini. Semua hasil masih belum diukur.
+## Ukuran sukses dan pertanyaan
 
-## Success measures (belum ada hasil)
-Job completion rate, median processing time, hasil uji intelligibility, MOS listening panel atau proxy evaluasi dengan keterbatasan dinyatakan.
-
-## Open decisions
-Penerimaan dosen untuk speech enhancement di luar contoh, model final, lisensi/isi mirror Kaggle, GPU/tenggat, batas durasi, lokasi deploy, kebijakan retensi, dan protokol evaluasi final. Rubrik resmi sudah dibaca; persetujuan belum ada.
+NLL/perplexity held-out, valid export, repair/termination rate, variasi ritme/pitch, repetition/memorization, penilaian musikal pendengar, latency dan peak memory. Angka target dibekukan sebelum eksperimen, bukan hasil. Pertanyaan: hak data MIDI, cakupan monofonik, jumlah work/composer, budget hardware/tenggat, penerimaan LSTM manual, kebijakan retensi dan kontrol generation. Retensi24jam dan kapasitas host masih usulan.

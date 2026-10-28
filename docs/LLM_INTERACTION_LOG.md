@@ -1,3 +1,43 @@
+﻿# Log LLM Nirava MIDI pivot
+
+## Sesi TASK 01 Pivot Nirava to MIDI String Generator
+
+Tanggal28Oktober2026; role ML Architecture Advisor/Member1. Pengguna menyatakan penugasan resmi: “Generative Audio (MIDI String Generator): Model mengenerate rangkaian nada musik tanpa pemrosesan berkas biner .wav yang berat.” Bukti konteks ini berasal dari pengguna, bukan approval arsitektur. Panduan DOCX dari sesi sebelumnya mendasari rubrik; tidak mengklaim konsultasi baru dengan dosen.
+
+### Prompt dan batas pengguna
+
+Instruksi utama TASK01 yang menjadi dasar perubahan:
+
+> 1. Review all existing Nirava Markdown documentation.
+> 2. Identify outdated Speech Denoising requirements.
+> 3. Update the project scope to MIDI String Generation.
+> 4. Propose a lightweight LSTM architecture and token representation.
+> 5. Define a dataset interface for Member 2.
+> 6. Define a training interface for Member 3.
+> 7. Update the roadmap and four-member task responsibilities.
+> 8. Ensure the design meets the lecturer's from-scratch and Vibe Coding requirements.
+> 9. Document architecture decisions and technical trade-offs.
+
+Konteks: Nirava MIDI Music Generator, autoregressive MIDI, LSTM PyTorch dari nol, data MIDI/output.mid, stack Next.js/FastAPI/PostgreSQL. Batas: dokumentasi saja, tanpa kode/download/copy implementation/pretrained, jangan hapus dokumen lama tanpa review, jangan ubah main/branch anggota lain atau commit/push/merge otomatis, jangan klaim performa tanpa eksperimen. Expected deliverables: PRD/blueprint/token/input-output/training/evaluasi/AGENTS dan handoff A2/A3/A4. Prompt utuh serta semua respons/tool results harus diekspor A4; kutipan/ringkasan ini bukan bukti chat lengkap.
+
+### Keputusan dan alasan
+
+- Branch main awal bersih; beralih ke dev/member-1-architecture sebelum menulis. Tidak memperbarui refs main/anggota lain.
+- Simpan seluruh19 Markdown lama dengan hierarki dan banner arsip; ganti dokumen aktif agar kontrak speech tidak dijalankan setelah pivot.
+- Grid monofonik16step/bar, token NOTE0..127/HOLD/REST plus PAD/BOS/EOS, V133. Lebih sederhana dari event MIDI umum tetapi tidak memodelkan chord/dynamics/rubato. Konfirmasi dosen diperlukan.
+- Usulkan dua sel LSTM manual hidden128, embedding64 dan head133, CE next-token; operasi dasar PyTorch/autograd, semua weights baru. Dokumentasi resmi LSTM hanya konsep/API, tidak menyalin kode proyek. Usia keluarga LSTM berkonflik potensial dengan syarat kategori10tahun; eskalasi untuk konsultasi, bukan mengklaim disetujui.
+- Split karya/arrangement sebelum window; dataset MIDI belum dipilih. Speech Kaggle tidak dipindahkan menjadi corpus MIDI. Lisensi komposisi dan arrangement harus diverifikasi.
+- Grammar mask dicatat terpisah dari kemampuan raw model; fixed-length cap/forced EOS tidak disebut learned termination. NLL/perplexity serta listening/memorization dan biaya compute belum diukur.
+- API/schema/design juga diubah sebagai proposal dokumentasi agar tidak memandu implementasi upload/denoising lama; tidak ada migrasi/fitur dibuat.
+
+### Verifikasi dan handoff
+
+Cek diff/whitespace, file links, archive preservation, V=5+128, input[B,128]/logits[B,128,133], branch refs dan istilah domain lama. Tidak ada error training/model karena belum implementasi. A2 review sumber/hak data dan tokenizer, A3 review gates/CE/config/budget, A4 compile ekspor sesi dan reasoning kelompok. Semua approval/bukti runtime tetap pending. Tidak ada hasil eksperimen atau benchmark dibuat.
+
+## Riwayat sebelum pivot — bukan persyaratan aktif
+
+Bagian berikut dipertahankan lengkap sebagai jejak sesi speech. Instruksi/model/dataset di dalamnya telah digantikan dokumentasi MIDI aktif; jangan menganggapnya scope implementasi saat ini.
+
 # Log interaksi LLM
 
 ## TASK 01 — Nirava From-Scratch ML Architecture

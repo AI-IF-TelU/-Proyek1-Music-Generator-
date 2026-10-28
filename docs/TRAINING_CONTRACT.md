@@ -1,63 +1,25 @@
-﻿# Training Contract Nirava
+﻿# Training Contract Nirava MIDI
 
-Versi **nirava-training-v1**, TASK 01, 28 Oktober 2026. Pemilik Member 3; review Member 1 dan Member 2. Status Stage 1, usulan tanpa implementasi atau hasil. Kontrak model [ML_ARCHITECTURE.md](ML_ARCHITECTURE.md), batch [DATA_CONTRACT.md](DATA_CONTRACT.md).
+Versi **nirava-midi-training-v1** dan format **nirava-midi-checkpoint-v1**. Pemilik A3, review A1/A2. Stage1, rencana bukan implementasi. Model [ML_ARCHITECTURE](ML_ARCHITECTURE.md), tokenizer [MIDI_TOKENIZATION](MIDI_TOKENIZATION.md), data [DATA_CONTRACT](DATA_CONTRACT.md).
 
-## Objective dan kontrak training Member 3
+## Objective dan loop
 
-Semua konstanta adalah starting hypotheses yang harus dibekukan sebelum eksperimen; belum optimal/terukur. Epsilon=1e-7 untuk log/rasio loss. Gunakan Y/X scaled RI dan X_hat_consistent dari waveform rekonstruksi.
+Teacher-forced next-token cross entropy pada logits[B,T,133] dan targets[B,T], ignore PAD0. NLL=sum CE valid / jumlah target valid termasuk EOS. Tidak menghitung BOS sebagai target; model tetap boleh memberi logit untuk seluruh vocabulary saat evaluasi raw NLL. Tidak grammar-mask logits untuk mempercantik perplexity. Perplexity=exp(mean NLL), laporkan overflow bila terjadi, aggregation berbobot jumlah token bukan mean batch/perplexity.
 
-- L_D = 0.5*(mean BCEWithLogits(D(Y,X),1) + mean BCEWithLogits(D(Y,stopgrad(X_hat_consistent)),0)).
-- L_adv = mean BCEWithLogits(D(Y,X_hat_consistent),1).
-- L_RI = mean abs perbedaan komponen real/imaginary scaled, semua bin/frame fisik.
-- L_wave = mean abs(x_hat-x) pada sampel valid, sebelum quantization/clipping.
-- L_MR = mean lintas resolusi [(norm_F(abs(S_hat)-abs(S_x)) / max(norm_F(abs(S_x)),epsilon)) + mean abs(log(abs(S_hat)+epsilon)-log(abs(S_x)+epsilon))]. STFT resolusi (FFT,window,hop)=(256,256,64),(512,512,128),(1024,1024,256), Hann periodic, center=true/constant, tanpa learned features. Hitung per item sebelum mean batch; catat silence policy dan jangan diam-diam menghapus silence dari evaluasi.
-- L_G = 1*L_adv + 10*L_RI + 100*L_wave + 1*L_MR. Simpan raw dan weighted components. Tidak memakai loss SI-SDR pada v1 karena silence/scale ambiguity; tetap metrik evaluasi dengan kebijakan validitas jelas.
+Usulan awal: embedding64, dua LSTM hidden128, T128, batch16, Adam LR1e-3 betas(0.9,0.999), float32, grad norm clipping1, dropout0, max50epoch, validation tiap epoch, patience8 atas validation NLL. Max updates dan wall-time harus diisi setelah data/hardware diketahui. Semua bobot baru; bukan tuning pretrained. CPU dapat menjadi target eksperimen awal tetapi feasibility belum diukur.
 
-Urutan per batch: A2 waveform→STFT, sample z, forward G→iSTFT→STFT konsisten; update D dengan fake detached; update G dengan D frozen tetapi gradien terhadap input fake tetap aktif. Fresh forward D setelah update D untuk loss G; jangan reuse graph D yang parameternya telah berubah. Zero-grad setiap optimizer, ratio satu update D : satu G, tidak memakai adversarial gradient ke target/data. Validation eval/no_grad dan z tetap, tanpa update weights. Pemeriksaan shape/grad dan overfit subset kecil baru setelah gate/izin pilot.
+Loop: shuffle train windows per seed, reset h/c, embedding/recurrence/head, masked CE, zero_grad, backward, clip dan optimizer.step; log raw loss/grad norm/LR/token count. Validation eval/no_grad dengan data tetap dan raw CE; pilih best minimum validation token-NLL, tie model lebih kecil/runtime. Test dibuka sesudah config/checkpoint beku. Inference autoregresif terpisah dengan state carry dan grammar; tidak mengevaluasi sampling memakai teacher-forced accuracy saja.
 
-### Config eksperimen dan checkpoint
+R0 baseline unigram train-only smoothed probabilities; R1 LSTM usulan; R2 LR3e-4; R3 hidden64; R4 T64; R5 sampling temperature0.8/1/1.2 pada checkpoint sama (bukan retraining). Satu faktor berubah, data/tokenizer sama dan budget exposure/update dicatat. T64 mengubah konteks/window count sehingga laporkan perbedaan; jangan mengklaim fair compute tanpa normalisasi. Ulang seed jika budget tersedia; run gagal tetap dilaporkan.
 
-Config minimal: architecture_id, data_contract_version, run_id, source_commit, seed, dataset_version/manifest_hash, split IDs, sample_rate/segment_samples, semua parameter STFT/scaling/padding, kanal/norm/latent, reconstruction/chunk grid, optimizer G/D, LR/betas, batch/accumulation, epochs/max_updates, loss weights/resolusi/epsilon, precision/device, validation cadence, checkpoint metric/patience dan budget GPU-hour. Simpan resolved config dengan hash; source commit saja tidak cukup bila workspace dirty, rekam patch/hash dan jangan menyebut run reproduksibel tanpa snapshot source.
+## Config, checkpoint dan reproducibility
 
-Starting config: Adam G/D LR2e-4, betas(0.5,0.999), batch4, accumulation1, float32, max50 epoch dengan plafon update/waktu yang ditetapkan setelah inventory/profiling, validation tiap epoch, patience8 pada mean validation STOI. Catat item count/update/epoch untuk perbandingan setara. GPU tipe/VRAM belum diketahui; batch4 bukan klaim akan muat. AMP/scheduler/gradient clipping belum default; jika dipakai ubah config/eksperimen dan verifikasi STFT complex precision serta grad finite.
+Resolved config memuat run/source commit + dirty patch hash, architecture/tokenizer/data/training versions, vocabulary133 dan ID map hash, dataset/manifest/split hashes, window/stride, init/optimizer/clipping, hyperparameters, seeds, precision/device/software/OS, budget/cadence, model selection serta sampling mode/temp/top-k/cap. Pin versi environment dan parser setelah disetujui, tanpa instalasi pada task ini.
 
-Checkpoint last/best: G/D state_dict, optimizer states, epoch/global_step, RNG Python/NumPy bila digunakan/torch CPU/CUDA, sampler state atau rencana shuffle, scaler/scheduler bila ada, resolved config/hash, manifest hash, architecture/data-contract version, best score/patience state. Simpan di luar Git; hash untuk lineage. Resume hanya jika config/manifest kompatibel. Ekspor inference terpisah hanya G/config/hash, tidak optimizer/D. Jangan memuat pickle/checkpoint pihak tak tepercaya.
+Mapping checkpoint: format_version, model_state, optimizer_state, scheduler/scaler_state bila dipakai, epoch/global_step, tokens_seen, RNG Python/NumPy bila ada/torchCPU/CUDA, DataLoader/sampler state, resolved_config/hash, vocabulary/tokenizer hash, manifest/source hash, best_val_nll dan patience state. Save last/best di luar Git, checksum SHA256. Resume default batas epoch; mid-epoch hanya bila state sampler/worker diuji. State h/c tidak diteruskan antar training window. Ekspor inference model/config/tokenizer map/hash tanpa optimizer; loading checkpoint pihak tak tepercaya dilarang.
 
-| Run terencana | Perubahan dari v1 | Pertanyaan |
-|---|---|---|
-| R0 | lambda_adv=0, tidak training D | Apakah adversarial menambah manfaat? Bukan model generatif final |
-| R1 | v1 | Referensi |
-| R2 | LR G/D1e-4 | Stabilitas |
-| R3 | batch2 | Budget/sensitivitas; laporkan update dan contoh terpapar |
-| R4 | lambda_wave50 | Fidelity vs adversarial |
-| R5 | lambda_MR0 | Kontribusi multi-resolution loss |
+Seed init/shuffle/augmentation/worker/generation, dokumentasikan deterministic flags dan batas reproducibility lintas device/version. Sampling seed tidak menjamin byte-identical lintas library; bandingkan event canonical dan catat environment. Simpan token-level metric history, kurva train/val NLL/perplexity, failure log, actual time/memory dan source snapshot. Tidak ada skor dibuat pada task ini.
 
-Satu faktor berubah, split sama; bekukan budget update dan laporkan paparan contoh yang berbeda akibat batch. Replikasi kandidat terbaik pada tiga seed bila budget memungkinkan; jika satu seed, nyatakan batasan. Tidak wajib menjalankan diffusion hanya untuk pembanding. Tetapkan kriteria stop NaN/OOM, solusi/log dan rerun ID; jangan menyembunyikan run gagal.
+## Acceptance dan handoff
 
-### Evaluasi dan acceptance handoff
-
-Pilih best checkpoint menurut mean validation STOI, tie SI-SDR lalu biaya inference; artefak berat pada validation menjadi veto tertulis. Early stopping tidak memakai test. Setelah freeze checkpoint/config, evaluasi semua utterance test valid; noisy baseline wajib, reconstruction-only ablation dan pretrained optional berlabel terpisah. STOI/SI-SDR/delta terhadap noisy, PESQ hanya jika tooling/lisensi sesuai, listening intelligibility/artefak/fonem/speaker, RTF dan peak RAM/VRAM. [EVALUATION.md](EVALUATION.md) tetap sumber protokol pilot/ambang usulan, bukan hasil. Gunakan per-utterance aggregation dan lengkapi failure log. Speech/noise sintetis test tidak diacak ulang tiap epoch.
-
-Tes yang disyaratkan nanti: 32000→257×251→272×256 dan semua tabel shape; STFT round-trip max abs error awal ≤1e-5 float32 pada waveform bounded (konfirmasi device/toleransi); iSTFT length; DC/Nyquist; finite zero/silence loss; D detach dan G gradient lewat inverse/projection; checkpoint/resume; split leakage; padding/overlap-add continuity; reconstruction duration dan alignment. Ini acceptance spesifikasi, belum tes yang lulus.
-
-
-
-## Format checkpoint dan keluaran run
-
-Usulan berkas `last.pt` dan `best.pt` hanya di storage eksperimen privat, berisi mapping dengan `checkpoint_format_version=nirava-checkpoint-v1`, `architecture_id=nirava-stft-cgan-v1`, `data_contract_version=nirava-data-v1`, `training_contract_version=nirava-training-v1`, `model_g`, `model_d`, `optimizer_g`, `optimizer_d`, `epoch`, `global_step`, `rng_states`, `sampler_state`, `resolved_config`, `config_hash`, `manifest_hash`, `source_revision`, `best_metric` dan `patience_counter`. Scheduler/scaler bila dipakai wajib ikut. Bukan whole-model object dari kode eksternal. Format mapping diperiksa sebelum resume; hash berbeda memerlukan run baru atau keputusan migrasi yang dicatat. Epoch-boundary checkpoint adalah default awal; resume mid-epoch hanya dijanjikan bila posisi sampler/worker augmentation sudah direkam dan diuji.
-
-Ringkasan run nonrahasia: resolved config, environment/lockfile reference, metric history berformat JSONL/CSV (step,epoch,split,loss components,STOI,SI-SDR,LR,elapsed,peak memory), exception/failure log, source snapshot hash dan checkpoint SHA-256. Semua grafik harus berasal dari history aktual dan memuat run/split/unit. File `.pt`, audio dan dataset tidak masuk Git. Tidak ada format/berkas run yang dibuat pada TASK 01.
-
-## Reproduksibilitas dan acceptance Member 3
-
-- Kunci versi Python/PyTorch/CUDA/cuDNN, OS/device, dependency lock/hash, thread/precision dan decoder/resampler. Tidak memasang atau mengasumsikan versi pada tahap ini.
-- Seed RNG Python, NumPy bila dipakai, torch CPU/CUDA, DataLoader generator/worker dan mixing/crop. Validation/test memakai manifest dan latent/crop/grid tetap. Seed saja tidak menjamin determinisme lintas hardware atau versi; catat setting deterministic/benchmark, operasi nondeterministik dan trade-off kecepatannya.
-- Inisialisasi/normalisasi mengikuti ML_ARCHITECTURE. Perubahan loss/preprocessing atau channel memerlukan versi/config baru, review A1/A2 dan rerun yang bisa dilacak.
-- Sebelum eksperimen formal setelah izin: terima audit/manifest A2, buktikan no leakage, smoke shape/inverse/gradient, overfit subset kecil, checkpoint/resume dan profiling. Jangan menyamakan initial loss rendah karena residual passthrough dengan keberhasilan denoising.
-- Setelah run: laporkan setiap kegagalan, komponen loss dan validasi, pemilihan checkpoint serta skor utterance held-out. Model selection hanya validation. Tidak mengulang tuning memakai test lalu tetap menyebutnya held-out.
-
-## Handoff dan stop conditions
-
-A2 menyerahkan audit/manifest/hash serta waveform sesuai DATA_CONTRACT; A1 mereview tensor/objective/rekonstruksi; A3 mengisi config dan budget terukur; A4 menyimpan prompt, error asli dan analisis tim. Hentikan run pada NaN/Inf, OOM berulang atau budget habis; simpan log/checkpoint valid terakhir bila mungkin. Mengubah batch/precision/budget dicatat sebagai konfigurasi/run baru, bukan hasil diam-diam.
-
-TASK 01 hanya mendefinisikan kontrak: model/trainer belum dibuat. Gate Stage1 dan izin pilot pada [STAGE1_VALIDATION.md](STAGE1_VALIDATION.md) tetap berlaku. Task selanjutnya direkomendasikan review data/hardware/approval; implementasi memerlukan otorisasi tersendiri.
+Setelah izin: shape dan shift/mask, CE pada PAD, finite gradient, overfit corpus kecil, reset/carry state, save/resume, vocabulary mismatch, grammar/export dan cap termination tests. Audit sequence raw serta post-mask; score listening/memorization mengikuti [EVALUATION](EVALUATION.md). Hentikan NaN/OOM/budget habis dan catat; jangan menyembunyikan retries. A2 menyerahkan manifest/tokenizer fixtures, A1 review gates/shape, A3 mengisi budget/run, A4 menyimpan prompt/error/analisis/hasil. Bukan izin mulai training.

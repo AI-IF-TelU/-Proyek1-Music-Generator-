@@ -1,39 +1,13 @@
-# PostgreSQL schema — draft
+﻿# Database Schema Nirava MIDI proposal
 
-## `enhancement_jobs`
-| Column | Type | Constraint / meaning |
-|---|---|---|
-| id | UUID | PK, generated server-side |
-| access_token_hash | VARCHAR(128) | NOT NULL, hash token job |
-| original_filename | VARCHAR(255) | sanitized display name |
-| status | VARCHAR(16) | pending/processing/completed/failed/expired |
-| input_storage_key | TEXT NULL | private storage key, not public URL |
-| output_storage_key | TEXT NULL | enhanced audio key |
-| content_type | VARCHAR(100) | detected MIME |
-| file_size_bytes | BIGINT | positive |
-| duration_seconds | DOUBLE PRECISION NULL | validated duration |
-| processing_seconds | DOUBLE PRECISION NULL | runtime |
-| error_code | VARCHAR(64) NULL | safe error category |
-| created_at | TIMESTAMPTZ | default now() |
-| started_at | TIMESTAMPTZ NULL | processing start |
-| completed_at | TIMESTAMPTZ NULL | completion |
-| expires_at | TIMESTAMPTZ | indexed for cleanup |
+Dokumentasi target, **tidak ada skema database atau migrasi yang dijalankan**. Rancangan enhancement_jobs lama dipertahankan di arsip speech; tabel/kolom berikut tidak dianggap sudah ada. Saat implementasi diizinkan gunakan Alembic, bukan create_all production.
 
-Indexes: `(status, created_at)`, `(expires_at)`. Alembic migrations as source of truth.
+## generation_jobs usulan
 
-## Retention
-Target 24h, adjustable after privacy requirements. Cleanup process deletes storage objects and metadata or retains only aggregate anonymized counters with explicit policy. Prevent stale paths and orphan files.
+UUID id PK server-generated; access_token_hash NOT NULL; status enum pending/processing/completed/failed/expired; bars INTEGER4/8/16; seed INTEGER bounded; temperature DOUBLE PRECISION finite/in range; model_version/tokenizer_version TEXT; output_storage_key TEXT nullable; step_count/note_count/output_size_bytes nullable; termination_reason nullable; processing_seconds nullable; error_code nullable; created_at/started_at/completed_at/expires_at TIMESTAMPTZ. PostgreSQL menyimpan metadata, bukan MIDI bytes, tokens corpus atau weights.
 
-## No user table initially
-MVP tanpa akun. Job token adalah capability credential; tetap ada risiko jika token bocor. Jangan simpan audio bytes di PostgreSQL.
+CHECK target: durations/counts nonnegative ketika terisi, size positif, expires_at>created_at. Index status/created_at dan expires_at. Source file path tidak berasal dari pengguna. Tidak ada original_filename/sample_rate/channel atau input_audio key untuk MVP tanpa upload. Version fields mendukung lineage checkpoint; token/hash/path privat tidak dicatat pada log.
 
-## Constraints dan penghapusan (target migrasi)
-Tambahkan CHECK untuk enum status, file_size_bytes > 0, durasi positif jika terisi, processing_seconds >= 0 jika terisi, serta expires_at > created_at. Validasi aplikasi tetap diperlukan.
+## Retention target
 
-Simpan detected_sample_rate_hz (INTEGER positif) dan detected_channels (INTEGER positif) sebagai metadata validasi decoder. Batas dukungan ditentukan setelah uji model; jangan menerima nilai tak terbatas hanya karena decoder dapat membacanya.
-
-Saat expired, storage key boleh null setelah file berhasil dihapus. Pertahankan metadata minimal (id, access_token_hash, status, expires_at) sebagai tombstone setidaknya sampai expires_at + 1 jam untuk DELETE idempotent/410, lalu hapus. Nama file dan metadata audio dibersihkan saat file dihapus. Cleanup file yang gagal harus selesai sebelum baris dihapus agar objek tidak menjadi orphan. Periode tombstone ini usulan yang masih perlu persetujuan kebijakan privasi.
-
-Simpan output_duration_seconds (DOUBLE PRECISION positif jika terisi) untuk verifikasi timeline A/B. Update completed beserta output_storage_key hanya berhasil bila status masih processing dan belum kedaluwarsa. Jika update kalah oleh DELETE/expiry, worker menghapus output yang baru dibuat.
-
-Kolom original_filename, content_type, file_size_bytes, duration_seconds, detected_sample_rate_hz, detected_channels dan output_duration_seconds harus nullable untuk tombstone minimal; CHECK nilai positif berlaku ketika terisi. Jangan menghapus storage key yang masih diperlukan untuk retry cleanup. Purge metadata hanya setelah semua file dan output worker terlambat telah ditangani.
+Output24jam, expired menutup akses langsung pada request. Cleanup menghapus storage dengan retry; simpan storage key sampai deletion sukses. Tombstone id/access hash/status/expiry minimal sampai expires_at+1jam, lalu purge hanya setelah output termasuk late worker telah ditangani. Field nonminimal dapat nullable/dihapus pada tombstone sesuai kebijakan. Publish update completed atomik hanya jika status processing dan belum expired. Kebijakan privasi/retensi perlu konfirmasi; tidak ada user table MVP.
