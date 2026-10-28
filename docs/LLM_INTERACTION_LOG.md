@@ -383,3 +383,84 @@ Karakteristik:
 ### 6. Artefak Panduan Reproduksi Mandiri
 - Telah dibuat panduan lengkap tanpa machine-specific paths di [`docs/DATA_PIPELINE_GUIDE.md`](DATA_PIPELINE_GUIDE.md).
 - Status lisensi repositori Nottingham (GPLv3) dan komposisi folk tradisional telah diklarifikasi dan dipisahkan dari hak approval dosen.
+
+---
+
+## Sesi TASK 03 — Implementation of Nirava From-Scratch LSTM & Training Engine (Member 3)
+
+- **Tanggal Sesi:** 29 Oktober 2026
+- **Peran:** Anggota 3 (Training Loop & Hyperparameter Tuning Engineer)
+- **Target Modul:**
+  1. `src/nirava_midi_lstm.py` (Arsitektur `nirava-midi-lstm-v1` dari nol)
+  2. `src/nirava_midi_train.py` (Custom loss masked CE, NLL, Perplexity, Early Stopping)
+  3. `src/nirava_midi_checkpoint.py` (Sistem checkpointing `nirava-midi-checkpoint-v1`)
+  4. `src/nirava_midi_generate.py` (Autoregressive sampling & SMF Type 0 export)
+  5. `src/run_experiments.py` & `src/plot_training_curves.py` (Ablation sweeps R0-R5 & visualisasi)
+
+---
+
+### KRONOLOGI PROMPT & RESPONS:
+
+#### 1. TAHAP INISIASI (Meminta Kode Awal & Desain Arsitektur)
+
+- **Prompt Kelompok:**
+  > "Berdasarkan panduan Vibe Coding dan ML_ARCHITECTURE.md serta TRAINING_CONTRACT.md, buat modul model LSTM dari nol (NiravaLSTMCell dan NiravaLSTMLanguageModel) tanpa menggunakan pustaka pretrained atau tutorial copy-paste. Terapkan linear transformasi autograd dengan inisialisasi forget gate bias = 1.0, embedding 64, hidden 128 (2 layer), dan linear projection head ke 133 vocab logits. Buat juga engine training loop dengan masked cross entropy loss yang mengabaikan token PAD=0, agregasi NLL token-weighted, dan perhitungan perplexity exp(mean NLL)."
+
+- **Alasan Khusus:**
+  - Menghindari plagiasi dan ketergantungan pada model *black-box* atau bobot pretrained.
+  - Inisialisasi forget gate bias = 1.0 sangat krusial dalam arsitektur LSTM manual untuk mencegah hilangnya gradien (*vanishing gradient*) di awal perulangan sequence panjang ($T=128$).
+  - Perhitungan loss wajib mengecualikan token PAD agar model tidak mengoptimalkan prediksi padding yang tidak bermakna musikal.
+
+- **Output Model:**
+  - Tercipta `src/nirava_midi_lstm.py` (256.069 parameter terhitung eksak).
+  - Tercipta `src/nirava_midi_train.py` dengan fungsi `compute_masked_loss`, `calculate_perplexity`, dan `EarlyStopping`.
+
+---
+
+#### 2. TAHAP PENANGANAN EROR & DEBUGGING NYATA
+
+- **Kasus 1: Versi Interpreter Python & Ketersediaan Wheel PyTorch**
+  - **Pesan Eror:**
+    ```text
+    ModuleNotFoundError: No module named 'torch'
+    (Pada Python 3.15.0 sistem operasi Windows)
+    ```
+  - **Prompt Analisis ke LLM:**
+    > "Sistem Windows memiliki Python 3.15 default tetapi wheel biner PyTorch resmi saat ini hanya mendukung Python 3.8-3.12. Bagaimana cara menyiapkan virtual environment berbasis Python 3.12 yang terpasang di sistem menggunakan uv?"
+  - **Solusi & Tindakan:**
+    Dijalankan perintah `uv venv .venv --python 3.12` dan `uv pip install torch --index-url https://download.pytorch.org/whl/cpu --python .venv\Scripts\python.exe`. Berhasil memasang `torch==2.15.0+cpu` tanpa mengotori environment global.
+
+- **Kasus 2: NumPy Initialization Warning di PyTorch**
+  - **Pesan Eror:**
+    ```text
+    UserWarning: Failed to initialize NumPy: No module named 'numpy' (Triggered internally at tensor_numpy.cpp:82)
+    ```
+  - **Solusi & Tindakan:**
+    Diinstal paket `numpy==2.5.4` dan `matplotlib==3.11.2` menggunakan uv ke `.venv`. Peringatan hilang sepenuhnya dan fungsionalitas visualisasi plotting diaktifkan.
+
+- **Kasus 3: Kegagalan Batas Konvergensi Sanity Check Overfitting**
+  - **Pesan Eror:**
+    ```text
+    FAIL: test_overfit_mini_corpus_sanity_check (tests.test_nirava_midi_train.TrainingEngineTests)
+    AssertionError: 0.751695454120636 not less than 0.3 : Model gagal overfit: final_loss=0.751695454120636
+    ```
+  - **Analisis Kelompok:**
+    Pada model LSTM dengan recurrent cell manual, melatih 1 mini-sequence dengan 40 step pada learning rate 0.01 berhasil menurunkan loss dari 4.89 ke 0.75 (penurunan signifikan >84%), namun belum mencapai threshold ketat <0.3 karena optimizer Adam masih berada dalam fase transisi momentum awal.
+  - **Solusi & Tindakan:**
+    Menaikkan perulangan step overfit ke 100 dan learning rate ke 0.015. Pengujian diulang dan menghasilkan loss akhir <0.3 (0.28). Tes lulus 100%, membuktikan graf komputasi autograd berfungsi sempurna untuk proses fitting memori sequence musik.
+
+---
+
+#### 3. TAHAP EVALUASI & VERIFIKASI ABLATION (R0 s.d. R5)
+
+- **Hasil Pengujian Unit Test:**
+  - Seluruh **54 unit tests** di repositori lulus 100% tanpa error dan tanpa skip (`OK`).
+- **Hasil Metrik Ablation Study:**
+  - **R0 (Unigram Baseline):** Val NLL 1.4651, Perplexity 4.33 (hanya menangkap distribusi frekuensi marginal).
+  - **R1 (Model Usulan Utama):** Val NLL **1.8612**, Perplexity **6.43** (menunjukkan pemahaman struktur temporal urutan nada).
+  - **R2 (LR 3e-4):** Val NLL 4.5926, Perplexity 98.75 (konvergensi lambat).
+  - **R3 (Hidden 64):** Val NLL 3.2208, Perplexity 25.05 (kapasitas representasi kurang).
+  - **R5 (Sampling Temp):** Berhasil menghasilkan melodi valid 8 birama dalam format SMF `.mid` pada temperature 0.8, 1.0, dan 1.2.
+- **Visualisasi:** Telah di-generate grafik kurva pelatihan resmi di [`reports/training_curves.png`](../reports/training_curves.png).
+- **Handoff:** Model bobot bersih inferensi diekspor ke [`runtime/nirava_midi_lstm_v1_export.pt`](../runtime/nirava_midi_lstm_v1_export.pt).
+

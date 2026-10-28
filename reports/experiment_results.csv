@@ -1,0 +1,8 @@
+run_id,description,params,lr,hidden_dim,window_T,train_nll,val_nll,val_perplexity,epochs,tokens_seen,wall_time_sec
+R0,Baseline Unigram (Laplace Smoothed),0,-,-,-,-,1.4651,4.33,1,1480,0.02
+R1,"Model Usulan Utama (LSTM hidden 128, LR 1e-3)",256069,0.001,128,128,1.9823,1.8612,6.43,12,17760,3.38
+R2,Ablation LR Konservatif (LR 3e-4),256069,0.0003,128,128,4.6704,4.5926,98.75,12,17760,2.25
+R3,Ablation Kapasitas Kecil (Hidden 64),83205,0.001,64,128,3.5723,3.2208,25.05,12,17760,1.79
+R5_temp_0.8,Sampling R1 checkpoint @ temperature=0.8,256069,-,128,128,-,-,-,-,-,-
+R5_temp_1.0,Sampling R1 checkpoint @ temperature=1.0,256069,-,128,128,-,-,-,-,-,-
+R5_temp_1.2,Sampling R1 checkpoint @ temperature=1.2,256069,-,128,128,-,-,-,-,-,-
