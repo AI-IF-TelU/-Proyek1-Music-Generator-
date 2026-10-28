@@ -24,5 +24,3 @@ Fallback mixing jika komponen sah tersedia: split speaker/utterance dan source n
 Split harus menahan seluruh speaker dan seluruh turunan utterance. Jika speaker ID tidak tersedia, A2 melaporkan gap kepada A1; source grouping dapat didokumentasikan sebagai batasan tetapi **belum memenuhi speaker-aware acceptance** tanpa bukti tambahan atau pengecualian dosen yang eksplisit. Speaker tunggal/tidak cukup kelompok tidak boleh diklaim mendukung evaluasi speaker-disjoint. Jumlah/rasio split baru ditetapkan setelah inventory. Tidak random-split crop; audit hash dan parent IDs, termasuk noise, lintas split.
 
 Handoff A2: laporan dataset/licence/shape/alignment, manifest freeze + hash, jumlah speaker/utterance/durasi tiap split dan exclusions, synthetic mixing decision, contoh batch contract setelah implementasi diizinkan. A1/A3 review sebelum training formal; tidak ada download atau implementasi pada task Member1.
-
-
