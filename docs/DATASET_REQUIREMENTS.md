@@ -1,4 +1,4 @@
-﻿# Dataset Requirements Nirava MIDI
+# Dataset Requirements Nirava MIDI
 
 ## Pilihan aktif
 
@@ -21,13 +21,13 @@ File/versi/aransemen karya sama atau melodi transposisi harus berada pada split 
 ## Checklist Member 2
 
 - [x] Sumber dan folder dipilih pengguna; URL serta README upstream ditinjau.
-- [ ] Pin commit SHA upstream dan tanggal akses, simpan manifest paths/hash serta bukti lisensi/atribusi pada revision tersebut. `master` dapat berubah; belum ada SHA dipilih.
+- [x] Pin commit SHA upstream dan tanggal akses: `0992bb6cd864f6d4b90d6663e08c0ef53ffaa08f` (commit 2017-03-03), diakses 28 Oktober 2026 via GitHub API. Manifest paths/hash ada di `reports/midi_manifest.csv`. Catatan: salinan lokal berasal dari ZIP, jadi kesamaan isi dengan SHA ini belum diverifikasi byte per byte. Bukti lisensi/atribusi masih perlu dilengkapi.
 - [ ] Review hak komposisi/arrangement dan syarat training/redistribusi bersama tim/dosen, bukan sekadar label repository.
 - [ ] Inventory ukuran download/extract/cache, file/work/token count dan budget disk; hindari mengunduh seluruh repo bila scope hanya melody dan cara selektif yang sah tersedia.
-- [ ] Audit PPQ/SMF type, pitched part/monophony, meter/tempo, pedal/bend, note pairing, parse failures dan aturan filter v1.
-- [ ] Ukur exclusions/quantization loss, tuplets dan kecukupan subset4/4; dokumentasikan distribusi yang hilang dan bias.
-- [ ] Audit exact/near duplicates, work/arrangement/transposition groups sebelum split dan sebelum windowing.
-- [ ] Bekukan work-disjoint split, manifest/hash dan tokenizer version; train-only augmentation, validation/test tidak dipakai tuning.
-- [ ] Uji canonical round-trip serta target shift/PAD/mask setelah implementasi diizinkan, kemudian handoff [DATA_CONTRACT](DATA_CONTRACT.md).
+- [~] Audit PPQ/SMF type, pitched part/monophony, meter/tempo, pedal/bend, note pairing, parse failures dan aturan filter v1. Selesai sebagian: SMF/PPQ/pitched part/meter/overlap/parse sudah diaudit (lihat `reports/DATASET_AUDIT_REPORT.md`). Pedal/bend, note pairing dan tempo map belum.
+- [~] Ukur exclusions/quantization loss, tuplets dan kecukupan subset4/4; dokumentasikan distribusi yang hilang dan bias. Exclusions dan bias sudah didokumentasikan: 515 dari 1034 file usable, jigs/waltzes/slip jigs hilang seluruhnya. Quantization loss dan tuplets belum diukur karena memerlukan tokenizer.
+- [x] Audit exact/near duplicates, work/arrangement/transposition groups sebelum split dan sebelum windowing. Selesai: 494 work group (22 multi-file) via fingerprint interval invarian transposisi + Jaccard ≥0.25 + union-find. 2 exact duplicates dibuang. Detail di `reports/work_groups.csv`.
+- [x] Bekukan work-disjoint split, manifest/hash dan tokenizer version; train-only augmentation, validation/test tidak dipakai tuning. Selesai: split 414/52/51 (80/10/10), seed 20261028, leakage 0 (diverifikasi terpisah). Augmentasi transposisi train-only ±5/+6. Manifest di `reports/split_manifest.csv`, tokenizer hash `21c0930e...`.
+- [x] Uji canonical round-trip serta target shift/PAD/mask setelah implementasi diizinkan, kemudian handoff [DATA_CONTRACT](DATA_CONTRACT.md). Round-trip 519/519 lulus. Shift/PAD/mask diuji unit (34 tes lulus termasuk tes torch `int64[B,128]`). Handoff belum dilakukan secara formal kepada A3.
 
 Semua bukti runtime/data tetap pending. Pemilihan dataset tidak membuka Stage2 atau memberi izin download/install/training; approval arsitektur dan gate [STAGE1_VALIDATION](STAGE1_VALIDATION.md) tetap berlaku.

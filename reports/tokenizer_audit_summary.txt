@@ -1,0 +1,21 @@
+tokenizer=nirava-midi-step-v1 hash=21c0930ebf49f212455600a011be2b14cd066793619b2d47c5d972495a6a9bba
+sumber=C:\Users\Haikal\Downloads\-Proyek1-AI-Voice-Cleaner-\data\nottingham-dataset-master\nottingham-dataset-master\MIDI\melody
+total_file=1034
+encoded_ok=519
+rejected=515
+alasan_reject:
+  non_4_4_meter: 501
+  overlap_after_quantization: 14
+round_trip_pass=519/519
+total_steps=288368
+total_tokens_incl_bos_eos=289406
+steps_per_piece min/median/max=96/512/3584
+mean_quant_error_steps(rata2 per file)=0.0051
+max_quant_error_steps(tertinggi)=0.3359
+file_dengan_off_grid_events(>0.25 step)=105
+total_off_grid_events=3060
+file_dengan_min_duration_adjusted=0
+window128_stride128_estimasi=2753
+grup_duplikat_token_identik=2
+  hpps24.mid, hpps25.mid
+  reelsa-c22.mid, reelsm-q24.mid

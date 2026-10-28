@@ -1,0 +1,8 @@
+seed=20261028 threshold=0.25 tokenizer_hash=21c0930ebf49f212455600a011be2b14cd066793619b2d47c5d972495a6a9bba
+pieces_encoded=519 excluded_duplicates=2 kept=517
+work_groups=494 multi_file_groups=22
+train: pieces=414 groups=395 steps=230176 tokens=231004
+validation: pieces=52 groups=51 steps=28048 tokens=28152
+test: pieces=51 groups=48 steps=29120 tokens=29222
+leak_group_lintas_split=0
+leak_token_identik_lintas_split=0

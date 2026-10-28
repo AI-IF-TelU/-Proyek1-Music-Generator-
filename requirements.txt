@@ -1,0 +1,9 @@
+# Nirava MIDI Generator — dependensi Python
+# Venv di D:\nirava-venv, Python 3.12.10, Windows
+# Install: python -m venv D:\nirava-venv
+#          D:\nirava-venv\Scripts\pip install -r requirements.txt
+
+# PyTorch CPU (model kecil, training layak di CPU; GPU opsional)
+--index-url https://download.pytorch.org/whl/cpu
+torch==2.15.0+cpu
+

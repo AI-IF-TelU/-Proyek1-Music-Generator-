@@ -25,3 +25,5 @@ runtime/
 *.ckpt
 *.sql
 *.dump
+
+processed/
