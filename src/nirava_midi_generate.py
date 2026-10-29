@@ -20,12 +20,17 @@ import nirava_midi_lstm as ml
 import nirava_midi_tokenizer as tk
 
 
-def apply_grammar_mask(logits: torch.Tensor, note_is_active: bool) -> torch.Tensor:
+def apply_grammar_mask(
+    logits: torch.Tensor,
+    note_is_active: bool,
+    allow_eos: bool = True,
+) -> torch.Tensor:
     """Masking logit token yang melanggar aturan grammar musik monofonik.
 
-    Aturan:
+    Aturan (sesuai docs/MIDI_TOKENIZATION.md):
     1. PAD (0) dan BOS (1) tidak boleh di-generate.
     2. HOLD (4) hanya valid jika ada nada aktif sebelumnya.
+    3. EOS (2) di-mask selama langkah < target (atau min_bars) agar tidak berhenti prematur.
     """
     masked = logits.clone()
     masked[tk.PAD] = -float("inf")
@@ -33,6 +38,9 @@ def apply_grammar_mask(logits: torch.Tensor, note_is_active: bool) -> torch.Tens
 
     if not note_is_active:
         masked[tk.HOLD] = -float("inf")
+
+    if not allow_eos:
+        masked[tk.EOS] = -float("inf")
 
     return masked
 
@@ -105,11 +113,13 @@ def generate_melody(
         while len(tokens) - 1 < max_steps:
             logits_step = last_logits[0]  # [vocab_size]
 
-            # 1. Grammar mask
-            logits_step = apply_grammar_mask(logits_step, note_is_active)
+            # 1. Grammar mask: izinkan EOS hanya setelah minimal 1 bar (16 steps)
+            steps_so_far = len(tokens) - 1
+            allow_eos = (steps_so_far >= tk.STEPS_PER_BAR)
+            logits_step = apply_grammar_mask(logits_step, note_is_active, allow_eos=allow_eos)
 
             # 2. Temperature scaling
-            scaled_logits = logits_step / temperature
+            scaled_logits = logits_step / max(1e-4, temperature)
 
             # 3. Top-k filtering
             filtered_logits = apply_top_k(scaled_logits, top_k)
@@ -147,7 +157,9 @@ def generate_melody(
         # Jika mencapai max_steps tanpa EOS alami
         if tokens[-1] != tk.EOS:
             steps_so_far = len(tokens) - 1
-            rem = steps_so_far % tk.STEPS_PER_BAR
+            if steps_so_far == 0:
+                tokens.extend([tk.REST] * tk.STEPS_PER_BAR)
+            rem = (len(tokens) - 1) % tk.STEPS_PER_BAR
             if rem > 0:
                 pad_len = tk.STEPS_PER_BAR - rem
                 tokens.extend([tk.REST] * pad_len)

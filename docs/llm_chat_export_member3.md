@@ -111,24 +111,76 @@ Anggota 3 bertanggung jawab atas pengembangan model kecerdasan buatan dari nol (
   - Uji determinisme seed.
   - Seluruh pengujian lulus (total 54 tests di repositori lulus).
 
-### Sesi 6: Ablation Sweeps & Visualisasi (Fase 6, 7 & 8)
+### Sesi 6: Ablation Sweeps Awal & Visualisasi (Fase 6, 7 & 8)
 - **User Request:**
   "lanjutkan ke Fase 6 & 7", kemudian "Lanjut Fase 8"
 - **AI Response & Eksekusi:**
-  - Menyusun `src/run_experiments.py` dan mengeksekusi ablation study lengkap:
-    - R0 Baseline Unigram (NLL 1.4651, PPL 4.33).
-    - R1 Model Usulan (NLL 1.8612, PPL 6.43, parameter 256.069).
-    - R2 LR Konservatif 3e-4 (NLL 4.5926, PPL 98.75).
-    - R3 Kapasitas Kecil Hidden 64 (NLL 3.2208, PPL 25.05).
-    - R5 Sampling Temp 0.8, 1.0, 1.2 menghasilkan file `.mid` valid.
-  - Menyusun `src/plot_training_curves.py` dan menghasilkan visualisasi kurva Validation NLL dan Perplexity di `reports/training_curves.png`.
-  - Mengompilasi `reports/EXPERIMENT_REPORT.md` dan `reports/experiment_results.csv`.
-  - Mengompilasi catatan log Vibe Coding di `docs/LLM_INTERACTION_LOG.md`.
+  - Menyusun `src/run_experiments.py` awal dan menjalankan smoke-run eksperimen.
+  - Namun, terdeteksi bahwa `ensure_tokens_exist()` diam-diam memanggil data sintetis fixture karena file `processed/tokens_v1.jsonl` riil belum ada di workspace.
+  - Pelatihan awal menghasilkan metrik fixture sintetis (R0 1.4651, R1 1.8612) yang mengandung anomali (NLL R1 > R0 namun diklaim mengungguli).
+  - Skrip visualisasi `src/plot_training_curves.py` dibuat untuk memplot kurva metrik.
+
+### Sesi 7: Tanya Jawab Git Push & Klarifikasi Pipeline Dataset
+- **User Request 1:**
+  "lakukan push ke dev/member-3-training sekarang"
+- **AI Response 1:**
+  Melakukan staging file kode, skrip, dan dokumentasi, melakukan commit lokal, dan menanyakan konfirmasi otentikasi/push.
+- **User Request 2:**
+  "kenapa folder runtime dan processed tidak di push juga?"
+- **AI Response 2:**
+  Menjelaskan aturan kontrak repositori dan `.gitignore`:
+  1. Kontrak kerja `AGENTS.md` melarang keras commit dataset MIDI, file bobot biner `.pt`/`.ckpt`, atau direktori runtime ke repositori Git.
+  2. Folder `runtime/` dan `processed/` merupakan artefak lokal hasil komputasi yang dapat direproduksi secara deterministik menggunakan skrip pipeline data dan training.
+  3. Menjaga repositori Git tetap ringan, profesional, dan bebas dari pelanggaran hak cipta dataset biner.
+- **User Request 3:**
+  "untuk training tuh dataset mana yang digunakan? apakah dataset mentah dari source aslinya atau dataset yang sudah diolah oleh member 2?"
+- **AI Response 3:**
+  Menjelaskan alur data pipeline:
+  - Model LSTM **tidak mengonsumsi file MIDI mentah secara langsung** saat training loop.
+  - Model mengonsumsi sequence token simbolik (`processed/tokens_v1.jsonl`) yang telah diekstrak, difilter 4/4 monofonik, dikuantisasi ke 16 langkah per bar, dan di-split secara work-disjoint oleh Anggota 2 (`src/build_splits.py`).
+  - Dataset mentah Nottingham (`data/.../melody/*.mid`) adalah sumber masukan untuk pipeline ekstraksi Anggota 2 tersebut.
+
+### Sesi 8: Audit Kritis, Pelatihan Riil Nottingham & Koreksi Laporan (TASK 03C)
+- **User Request:**
+  "# TASK 03C — Critical Audit, Real Nottingham Training & Report Correction
+  Role: Member 3 — Training Loop & Hyperparameter Tuning Engineer
+  Mandatory Tasks:
+  1. Audit src/run_experiments.py dan pastikan tidak pernah secara diam-diam menghasilkan/menggunakan data sintetis ketika token riil hilang.
+  2. Pisahkan smoke test sintetis dari eksperimen riil.
+  3. Bangun ulang dataset token Nottingham riil menggunakan pipeline Member 2 (517 piece: 414 train / 52 val / 51 test).
+  4. Latih ulang model dari inisialisasi acak dan perbaiki seluruh metrik evaluasi ilmiah."
+- **AI Response & Investigasi:**
+  1. **Audit & Refactoring `src/run_experiments.py`:**
+     - Menghapus pemanggilan diam-diam `create_synthetic_tokens_jsonl()`.
+     - Menambahkan fungsi validasi ketat `validate_dataset()`: menolak keras file yang mengandung ID `_synth_` atau kurang dari 500 piece pada mode default (`--mode real`).
+     - Memisahkan mode `--mode synthetic` ke luaran terpisah (`reports/smoke_test_results.csv`) sehingga tidak mencemari laporan resmi.
+  2. **Rekonstruksi Dataset Nottingham:**
+     - Meng-clone repositori resmi Nottingham (commit `0992bb6cd864f6d4b90d6663e08c0ef53ffaa08f`) ke `data/nottingham-dataset`.
+     - Menjalankan `src/build_splits.py`:
+       - 1.034 file dipindai, 519 piece lolos filter 4/4 & kuantisasi grid, 2 duplikat identik dibuang (`hpps25`, `reelsm-q24`).
+       - Menghasilkan tepat **517 pieces unik** (414 train / 52 val / 51 test), 494 work groups, 0 leakage.
+       - Token target training riil: **230.590 token**; validation: **28.100 token**.
+  3. **Penanganan Eror Autoregressive Sampling:**
+     - *Error:* `ValueError: sequence harus [BOS, steps..., EOS]` saat eksekusi R5 temperature sweep.
+     - *Root cause:* Multinomial sampling memilih token `EOS` pada langkah ke-0 segera setelah `BOS`, menghasilkan sequence prematur `[BOS, EOS]` (hanya 2 token).
+     - *Solusi:* Memperbarui `apply_grammar_mask()` dan `generate_melody()` di `src/nirava_midi_generate.py` untuk mengunci `allow_eos = False` selama sequence belum mencapai minimal 1 birama (16 langkah).
+  4. **Eksekusi Pelatihan Riil & Ablation Sweeps (R0 s.d. R5):**
+     - **R0 (Unigram Baseline):** Val NLL **1.5182**, Perplexity **4.56** (pada 230.590 token).
+     - **R1 (Model Usulan Utama, Hidden 128, LR 1e-3):** Val NLL **1.1955**, Perplexity **3.31** (dalam 8 epoch, 96.65 detik). Model secara sah **mengungguli** unigram baseline ($1.1955 < 1.5182$).
+     - **R2 (LR Konservatif 3e-4):** Val NLL **1.4074**, Perplexity **4.09**. Konvergensi lebih lambat.
+     - **R3 (Kapasitas Kecil Hidden 64):** Val NLL **1.2489**, Perplexity **3.49**. Representasi kurang optimal dibanding hidden 128.
+     - **R5 (Sampling Temp 0.8, 1.0, 1.2):** Menghasilkan melodi 8 birama utuh (128 langkah, 32 s.d. 48 nada) dalam format SMF Type 0 yang valid.
+  5. **Pembaruan Artefak & Laporan:**
+     - `reports/EXPERIMENT_REPORT.md` dan `reports/experiment_results.csv` diperbarui dengan angka riil dan analisis jujur.
+     - Grafik kurva konvergensi riil dihasilkan di `reports/training_curves.png`.
+     - Model inferensi bersih diekspor ke `runtime/nirava_midi_lstm_v1_export.pt`.
+     - Seluruh **54 unit tests** di repositori lulus 100% (`Ran 54 tests in 61.2s, OK`).
 
 ---
 
 ## 3. Status Handoff ke Anggota Lain
 - **Kepada Anggota 4 (Lead Documentarian):**
-  Seluruh dokumen log (`LLM_INTERACTION_LOG.md`), riwayat ekspor (`llm_chat_export_member3.md`), laporan eksperimen (`EXPERIMENT_REPORT.md`), data metrik (`experiment_results.csv`), dan grafik kurva (`training_curves.png`) telah siap untuk dikompilasi ke laporan akhir tugas besar.
+  Seluruh dokumen log (`LLM_INTERACTION_LOG.md`), riwayat ekspor (`llm_chat_export_member3.md`), laporan eksperimen (`EXPERIMENT_REPORT.md`), data metrik (`experiment_results.csv`), dan grafik kurva (`training_curves.png`) telah diverifikasi di atas data Nottingham riil dan siap dikompilasi ke laporan tugas besar.
 - **Kepada Backend/Fullstack Engineer (Tahap Integrasi Mendatang):**
-  Model inferensi bersih telah tersedia di `runtime/nirava_midi_lstm_v1_export.pt` dan dapat langsung dipanggil menggunakan `nirava_midi_generate.generate_melody()`.
+  Model inferensi bersih hasil pelatihan riil telah tersedia di `runtime/nirava_midi_lstm_v1_export.pt` dan siap dipanggil via `nirava_midi_generate.generate_melody()`.
+

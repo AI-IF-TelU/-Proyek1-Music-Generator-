@@ -464,3 +464,64 @@ Karakteristik:
 - **Visualisasi:** Telah di-generate grafik kurva pelatihan resmi di [`reports/training_curves.png`](../reports/training_curves.png).
 - **Handoff:** Model bobot bersih inferensi diekspor ke [`runtime/nirava_midi_lstm_v1_export.pt`](../runtime/nirava_midi_lstm_v1_export.pt).
 
+---
+
+## Sesi TASK 03C — Critical Audit, Real Nottingham Training & Report Correction
+
+- **Tanggal Sesi:** 29 Oktober 2026
+- **Peran:** Anggota 3 (Training Loop & Hyperparameter Tuning Engineer)
+- **Target Modul:**
+  1. `src/run_experiments.py` (Audit eliminasi silent synthetic fallback, validasi dataset Nottingham riil, pemisahan smoke test)
+  2. `src/nirava_midi_generate.py` (Perbaikan grammar masking EOS prematur pada autoregressive generation)
+  3. `reports/EXPERIMENT_REPORT.md` & `reports/experiment_results.csv` (Koreksi metrik evaluasi riil dan analisis ilmiah jujur)
+  4. `reports/training_curves.png` (Visualisasi kurva konvergensi riil)
+  5. `runtime/checkpoints/*.pt` & `runtime/nirava_midi_lstm_v1_export.pt` (Bobot model terlatih dari data riil)
+  6. `runtime/generated/*.mid` (Sampel musik MIDI riil 8 birama)
+
+### 1. Temuan Audit Kritis (Root Cause Analysis)
+- **Problem 1 (Silent Synthetic Fallback):** Pada implementasi awal `src/run_experiments.py`, fungsi `ensure_tokens_exist()` diam-diam memanggil `create_synthetic_tokens_jsonl()` ketika file cache `processed/tokens_v1.jsonl` tidak ditemukan. Hal ini menyebabkan eksperimen sebelumnya berjalan pada fixture 12 sequence sintetis sederhana (1.480 token), bukan dataset Nottingham riil.
+- **Problem 2 (Kontradiksi Metrik & Analisis):** Pada laporan sebelumnya, R0 (Unigram) memiliki Val NLL 1.4651 sedangkan R1 memiliki Val NLL 1.8612. Teks laporan secara keliru mengklaim R1 mengungguli R0 padahal nilai NLL R1 lebih tinggi (lebih buruk).
+- **Tindakan Perbaikan:**
+  1. Menghapus total fungsi pembuatan data sintetis diam-diam di `src/run_experiments.py`.
+  2. Menambahkan fungsi validasi `validate_dataset()` yang mewajibkan dataset Nottingham asli (memeriksa ketiadaan ID `_synth_`, minimal 500 pieces, dan pembagian split utuh).
+  3. Memisahkan mode `--mode real` (default) dan `--mode synthetic` (hanya untuk smoke test cepat dengan artefak terisolasi di `smoke_test_results.csv`).
+
+### 2. Rekonstruksi Dataset Nottingham Riil
+- Dataset Nottingham resmi di-clone dari repository upstream (commit `0992bb6cd864f6d4b90d6663e08c0ef53ffaa08f`).
+- Pipeline Member 2 (`src/build_splits.py`) dijalankan dari awal:
+  - Total pieces berhasil di-encode: 519
+  - Deduplikasi sequence identik: 2 (`hpps25.mid` dan `reelsm-q24.mid`)
+  - Total pieces unik: **517 pieces**
+  - Pembagian split: **414 train / 52 validation / 51 test** (work-disjoint, 0 leakage)
+  - Total token target training: **230.590 token**
+  - Total token target validation: **28.100 token**
+
+### 3. Penanganan Eror & Debugging Autoregressive Generation
+- **Pesan Eror:**
+  ```text
+  ValueError: sequence harus [BOS, steps..., EOS]
+  (Muncul dari tk.decode_tokens saat menjalankan R5 sampling sweep)
+  ```
+- **Root Cause:** Pada awal generasi (langkah 0 segera setelah token `BOS`), multinomial sampling memilih token `EOS`. Akibatnya sequence langsung berhenti menjadi `[BOS, EOS]` (hanya 2 token, tanpa langkah musik). Hal ini melanggar kontrak panjang minimal sequence.
+- **Solusi:** Memperbarui fungsi `apply_grammar_mask()` dan `generate_melody()` di `src/nirava_midi_generate.py`. Parameter `allow_eos` diatur ke `False` selama sequence belum mencapai panjang minimal 1 birama (16 langkah). Setelah birama pertama terlampaui, EOS diizinkan secara bertahap atau ditutup pada `max_bars` dengan `length_cap` dan perataan kelipatan 16 langkah menggunakan REST padding.
+- **Verifikasi:** Seluruh 54 unit tests lulus 100% dan sampling pada temperatur 0.8, 1.0, 1.2 menghasilkan melodi 8 birama utuh (128 langkah, 32–48 nada).
+
+### 4. Hasil Eksperimen Riil & Analisis Ilmiah Otoritatif
+Seluruh eksperimen dijalankan secara end-to-end pada dataset Nottingham riil:
+
+| Run ID | Arsitektur / Konfigurasi | Params | Train NLL | Val NLL | Val Perplexity | Waktu |
+|---|---|---|---|---|---|---|
+| **R0** | Baseline Unigram (Laplace Smoothed) | 0 | - | **1.5182** | **4.56** | 3.33s |
+| **R1** | Model Usulan Utama (LSTM hidden 128, LR 1e-3) | 256,069 | 1.2189 | **1.1955** | **3.31** | 96.65s |
+| **R2** | Ablation LR Konservatif (LR 3e-4) | 256,069 | 1.5231 | **1.4074** | **4.09** | 107.25s |
+| **R3** | Ablation Kapasitas Kecil (Hidden 64) | 83,205 | 1.2793 | **1.2489** | **3.49** | 84.03s |
+
+- **Analisis Akademik Jujur:**
+  1. **Keunggulan Riil LSTM terhadap Baseline:** R1 (Val NLL **1.1955**, PPL **3.31**) secara sah dan terbukti matematis **mengungguli** baseline unigram R0 (Val NLL **1.5182**, PPL **4.56**). Model LSTM berhasil mempelajari dependensi transisi urutan nada melebihi sekadar distribusi frekuensi marjinal statis.
+  2. **Tingkat Konvergensi LR:** Learning rate $1\times 10^{-3}$ (R1) mencapai konvergensi lebih cepat dan stabil menuju NLL 1.1955 dibandingkan LR $3\times 10^{-4}$ (R2, NLL 1.4074).
+  3. **Pengaruh Kapasitas Arsitektur:** Hidden size 128 (R1) memberikan representasi memori urutan melodi yang lebih tajam dibandingkan hidden size 64 (R3, NLL 1.2489).
+  4. **Karakteristik Sampling (R5):**
+     - Temp 0.8: 32 nada, sangat stabil dan konsisten.
+     - Temp 1.0: 37 nada, variasi melodi seimbang.
+     - Temp 1.2: 48 nada, lompatan interval nada lebih dinamis.
+
