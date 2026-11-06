@@ -1,5 +1,9 @@
 # Log LLM Nirava MIDI pivot
 
+## Riwayat Member 1 yang disimpan
+
+29 Oktober 2026: [Riwayat interaksi LLM Member 1](llm_chat_export_member1.md) disimpan pada branch `dev/member-1-architecture`. Mencakup audit awal, kontrak speech, pivot MIDI, README, pemilihan Nottingham, publikasi terotorisasi dan pull Member2/3 hingga commit `7c1a259`. Dokumen memisahkan kutipan prompt, ringkasan respons/tindakan, alasan keputusan, hambatan aktual dan bukti commit. Ini rekonstruksi terkurasi dari konteks percakapan yang tersedia, **bukan ekspor mentah lengkap**; share link/ekspor platform dan analisis kelompok tetap perlu dilengkapi Member4. Integrasi kode anggota lain tidak dianggap verifikasi eksperimen oleh Member1. Log/ekspor Member2 dan Member3 tetap dipertahankan.
+
 ## Sesi TASK 01 Pivot Nirava to MIDI String Generator
 
 Tanggal28Oktober2026; role ML Architecture Advisor/Member1. Pengguna menyatakan penugasan resmi: “Generative Audio (MIDI String Generator): Model mengenerate rangkaian nada musik tanpa pemrosesan berkas biner .wav yang berat.” Bukti konteks ini berasal dari pengguna, bukan approval arsitektur. Panduan DOCX dari sesi sebelumnya mendasari rubrik; tidak mengklaim konsultasi baru dengan dosen.
